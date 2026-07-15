@@ -1,0 +1,480 @@
+/* ============================================================
+   CrownPrevail Logistics — Global Brand Overrides & Enhancements
+   Applied to ALL pages via <link> in <head>
+   ============================================================ */
+
+/* ── 1. CSS Variables (Brand Tokens) ─────────────────────── */
+:root {
+  --brand-gold:        #a68f50;
+  --brand-gold-dark:   #8a743e;
+  --brand-gold-light:  #c1ac6d;
+  --brand-navy:        #1a2e4a;
+  --brand-white:       #ffffff;
+  --brand-cream:       #f8f5ef;
+  --whatsapp-green:    #25D366;
+  --whatsapp-dark:     #1da851;
+}
+
+/* ── Desktop nav hexagon logo — WHITE background ────────────
+   Logo is transparent gold, so white bg gives perfect contrast.
+   ─────────────────────────────────────────────────────────── */
+a.hexagon-right {
+  background-color: #ffffff !important;
+}
+
+/* ── "Get a Quote" CTA button — desktop header right ────────*/
+.nav-cta-btn {
+  background-color: var(--brand-gold);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 10px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+  transition: background-color 0.25s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-cta-btn:hover {
+  background-color: var(--brand-gold-dark);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.nav-cta-btn i {
+  font-size: 16px;
+}
+
+@media (max-width: 991.98px) {
+
+  /* nav.bg-green is the element that actually holds the dark colour */
+  header nav.bg-green {
+    background-color: #ffffff !important;
+    border-bottom: 3px solid var(--brand-gold);
+  }
+
+  /* Hamburger → navy so it shows on white */
+  .toggle-mobileMenu {
+    color: var(--brand-navy) !important;
+  }
+
+  /* Hide the cart/quote icon and offcanvas bars icon on mobile —
+     keeps the header clean: Logo | Hamburger only */
+  header .offcanvas-bar-icon,
+  header .d-flex.align-items-center.tw-gap-36-px {
+    display: none !important;
+  }
+
+  /* Hide top address/phone strip on mobile */
+  .top-header-three {
+    display: none !important;
+  }
+}
+
+
+/* ── 2. Brand Color Overrides: Replace Template Red with Gold ─ */
+.bg-main-600,
+.hover-bg-main-600:hover,
+.btn-main,
+.bg-main-600-important { background-color: var(--brand-gold) !important; }
+
+.text-main-600,
+.hover-text-main-600:hover { color: var(--brand-gold) !important; }
+
+.border-main-600,
+.focus-border-main-600:focus,
+.hover-border-main-600:hover { border-color: var(--brand-gold) !important; }
+
+.text-star { color: var(--brand-gold) !important; }
+
+.bg-main-100-gradient-one,
+.bg-main-100-gradient-two,
+.bg-main-100-gradient-three,
+.bg-main-100-gradient-four {
+  background: linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-light) 100%) !important;
+}
+
+.hexagon-right::before,
+.hexagon-left::before {
+  border-color: transparent transparent transparent var(--brand-gold) !important;
+}
+
+/* Preloader car color fix */
+.car-top, .car-base { background-color: var(--brand-gold) !important; }
+
+/* ── 3. WhatsApp Floating Button ─────────────────────────── */
+.whatsapp-float {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  width: 58px;
+  height: 58px;
+  background-color: var(--whatsapp-green);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  box-shadow: 0 6px 24px rgba(37, 211, 102, 0.45);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  animation: whatsapp-pulse 2.5s infinite;
+}
+
+.whatsapp-float:hover {
+  background-color: var(--whatsapp-dark);
+  color: #fff;
+  transform: scale(1.1) translateY(-3px);
+  box-shadow: 0 10px 32px rgba(37, 211, 102, 0.55);
+}
+
+.whatsapp-float i {
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* WhatsApp tooltip */
+.whatsapp-float::before {
+  content: "Chat with us";
+  position: absolute;
+  right: calc(100% + 12px);
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.whatsapp-float:hover::before {
+  opacity: 1;
+}
+
+@keyframes whatsapp-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5); }
+  70%  { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+/* ── 4. Stats Counter Section ─────────────────────────────── */
+.cp-stats-section {
+  background: linear-gradient(135deg, var(--brand-navy) 0%, #243a5a 100%);
+  padding: 72px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-stats-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -20%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(166,143,80,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.cp-stat-item {
+  text-align: center;
+  padding: 24px 16px;
+  position: relative;
+}
+
+.cp-stat-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: rgba(255,255,255,0.12);
+}
+
+.cp-stat-number {
+  font-size: 52px;
+  font-weight: 800;
+  color: var(--brand-gold);
+  line-height: 1;
+  letter-spacing: -2px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.cp-stat-label {
+  font-size: 15px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.cp-stat-icon {
+  font-size: 36px;
+  color: var(--brand-gold);
+  margin-bottom: 14px;
+  opacity: 0.9;
+  display: block;
+}
+
+/* ── 5. Contact Form Success Message ──────────────────────── */
+.form-success-msg {
+  display: none;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  padding: 18px 24px;
+  color: #166534;
+  font-weight: 600;
+  margin-top: 16px;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-success-msg.show {
+  display: flex;
+}
+
+/* ── 6. Business Hours Table in Contact ────────────────────── */
+.hours-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+}
+
+.hours-table td {
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.hours-table tr td:first-child {
+  font-weight: 600;
+  color: var(--brand-navy);
+}
+
+.hours-table tr td:last-child {
+  text-align: right;
+}
+
+.hours-open {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.hours-closed {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.hours-table tr:nth-child(odd) td {
+  background: rgba(166, 143, 80, 0.06);
+  border-radius: 6px;
+}
+
+/* ── 7. Service Table Country Flags ───────────────────────── */
+.country-name {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.shipping-rates-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+.shipping-rates-table table {
+  min-width: 650px;
+}
+
+/* ── 8. Blog Read Time Badge ──────────────────────────────── */
+.blog-read-time {
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+  background: var(--brand-gold);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* ── 9. Footer Dead Link Fix (visual) ────────────────────── */
+.footer-nav-dead {
+  pointer-events: none;
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 10. Mobile Responsive Tweaks ─────────────────────────── */
+@media (max-width: 576px) {
+  .cp-stat-number { font-size: 36px; }
+  .cp-stat-item:not(:last-child)::after { display: none; }
+  .whatsapp-float { bottom: 20px; right: 16px; width: 50px; height: 50px; font-size: 24px; }
+}
+
+@media (max-width: 768px) {
+  .cp-stat-number { font-size: 42px; }
+}
+
+/* ── 11. Premium hover micro-animations ───────────────────── */
+.service-card-hover {
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+}
+
+.service-card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(166,143,80,0.18) !important;
+}
+
+/* ── 12. Enhanced button shine effect ─────────────────────── */
+.btn-main::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-main:hover::after {
+  left: 150%;
+}
+
+/* ── 13. Social Media Icon Images ──────────────────────────── */
+.social-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s ease;
+}
+
+.social-icon:hover {
+  transform: scale(1.15);
+}
+
+/* Larger social icons in specific contexts */
+.offcanvas-sidebar .social-icon,
+.footer .social-icon,
+.header-four-social .social-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Team social share icons */
+.team-item .socails-share .social-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── 14. Header Size Reduction ──────────────────────────────── */
+.absolute-headers {
+  padding-top: 0;
+}
+
+.top-header-three {
+  min-height: auto;
+}
+
+.header nav.bg-green {
+  min-height: auto;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.nav-menu__link {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* Desktop logo hexagon sizing */
+a.hexagon-right img {
+  max-width: 140px !important;
+}
+
+/* ── 15. Responsive Testimonials ────────────────────────────── */
+.testimonials-three-content-slider .swiper-slide > div {
+  padding: 24px;
+  border-radius: 12px;
+}
+
+@media (max-width: 767.98px) {
+  .testimonials-three-content-slider .swiper-slide > div {
+    padding: 16px;
+  }
+  .testimonials-three-content-slider p.h4 {
+    font-size: 16px;
+    line-height: 1.6 !important;
+  }
+}
+
+/* ── 16. Responsive Spacing Cleanup ──────────────────────────── */
+@media (max-width: 991.98px) {
+  section.py-140,
+  .py-140 {
+    padding-top: 60px !important;
+    padding-bottom: 60px !important;
+  }
+  .pt-140 {
+    padding-top: 60px !important;
+  }
+  .tw-mb-15 {
+    margin-bottom: 32px !important;
+  }
+  .tw-mt-15 {
+    margin-top: 32px !important;
+  }
+  .tw-mt-13 {
+    margin-top: 28px !important;
+  }
+  .tw-mb-13 {
+    margin-bottom: 28px !important;
+  }
+  .tw-gap-11 {
+    gap: 24px !important;
+  }
+  .xl-tw-gap-12 {
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  section.py-140,
+  .py-140 {
+    padding-top: 40px !important;
+    padding-bottom: 40px !important;
+  }
+  .pt-140 {
+    padding-top: 40px !important;
+  }
+  .tw-mb-15 {
+    margin-bottom: 24px !important;
+  }
+  .tw-mt-15 {
+    margin-top: 24px !important;
+  }
+  .h1, h1 {
+    font-size: 26px !important;
+  }
+  .h2, h2 {
+    font-size: 22px !important;
+  }
+  .h3, h3 {
+    font-size: 20px !important;
+  }
+  .h4, h4 {
+    font-size: 17px !important;
+  }
+}
+
+
