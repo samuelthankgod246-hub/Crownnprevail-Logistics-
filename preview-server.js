@@ -19,9 +19,12 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
+  // Decode URL to handle spaces and special characters
+  const decodedUrl = decodeURIComponent(req.url);
+  
   // Handle root and /admin/ routing
-  let url = req.url;
-  if (url === '/') {
+  let url = decodedUrl;
+  if (url === '/' || url === '') {
     url = '/admin/index.html';
   } else if (url === '/admin/' || url === '/admin') {
     url = '/admin/index.html';
