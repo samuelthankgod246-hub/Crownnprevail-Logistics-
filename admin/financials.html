@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Financial Dashboard - Income, Expenses & Profit/Loss">
+  <title>Financials — CrownPrevail Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/admin.css">
+  <style>
+    .financial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .financial-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #a68f50; }
+    .financial-card.income { border-left-color: #16a34a; }
+    .financial-card.expense { border-left-color: #dc2626; }
+    .financial-card.profit { border-left-color: #3b82f6; }
+    .financial-card h3 { font-size: 12px; color: #666; margin: 0 0 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .financial-card .amount { font-size: 28px; font-weight: 700; margin: 10px 0; }
+    .financial-card.income .amount { color: #16a34a; }
+    .financial-card.expense .amount { color: #dc2626; }
+    .financial-card.profit .amount { color: #3b82f6; }
+    .financial-card .trend { font-size: 12px; color: #999; margin-top: 8px; }
+    .financial-card .trend i { margin-right: 4px; }
+    .chart-container { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 30px; }
+    .transaction-table { width: 100%; margin-top: 20px; }
+    .transaction-table thead { background: #f9f9f9; }
+    .transaction-table th { padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    .transaction-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+    .transaction-table tr:hover { background: #fafafa; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge.income { background: #dcfce7; color: #166534; }
+    .badge.expense { background: #fee2e2; color: #991b1b; }
+    .filter-bar { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .filter-bar select, .filter-bar input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .add-transaction-btn { background: #a68f50; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .add-transaction-btn:hover { background: #8b7240; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 12px; padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .modal h2 { margin: 0 0 20px; font-size: 20px; color: #1a2e4a; }
+    .modal .form-group { margin-bottom: 16px; }
+    .modal .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; font-size: 14px; }
+    .modal .form-group input, .modal .form-group select, .modal .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; }
+    .modal .form-actions { display: flex; gap: 12px; margin-top: 24px; }
+    .modal .btn { flex: 1; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .modal .btn.primary { background: #a68f50; color: #fff; }
+    .modal .btn.primary:hover { background: #8b7240; }
+    .modal .btn.secondary { background: #f0f0f0; color: #333; }
+    .modal .btn.secondary:hover { background: #e0e0e0; }
+    .close-modal { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/assets/images/logo/logo%20plain%20background.png" alt="CrownPrevail">
+        <p class="brand-name">CrownPrevail</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link">
+          <i class="fas fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="blogs.html" class="nav-link">
+          <i class="fas fa-blog"></i>
+          <span>Blog Posts</span>
+        </a>
+        <a href="team.html" class="nav-link">
+          <i class="fas fa-users"></i>
+          <span>Team</span>
+        </a>
+        <a href="inquiries.html" class="nav-link">
+          <i class="fas fa-envelope"></i>
+          <span>Inquiries</span>
+        </a>
+        <a href="analytics.html" class="nav-link">
+          <i class="fas fa-bar-chart"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="financials.html" class="nav-link active">
+          <i class="fas fa-wallet"></i>
+          <span>Financials</span>
+        </a>
+        <a href="invoices.html" class="nav-link">
+          <i class="fas fa-file-invoice"></i>
+          <span>Invoices</span>
+        </a>
+        <a href="ai-assistant.html" class="nav-link">
+          <i class="fas fa-robot"></i>
+          <span>AI Assistant</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="profile.html" class="nav-link">
+          <i class="fas fa-user-circle"></i>
+          <span>Profile</span>
+        </a>
+        <a href="#" id="logout-btn" class="nav-link">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h2><i class="fas fa-wallet"></i> Financial Dashboard</h2>
+        <button class="btn btn-gold add-transaction-btn" id="add-transaction-btn">
+          <i class="fas fa-plus"></i> Add Transaction
+        </button>
+      </div>
+
+      <!-- Financial Summary Cards -->
+      <div class="financial-grid">
+        <div class="financial-card income">
+          <h3>Total Income</h3>
+          <div class="amount" id="total-income">₦0</div>
+          <div class="trend"><i class="fas fa-arrow-up" style="color: #16a34a;"></i> +12% this month</div>
+        </div>
+        <div class="financial-card expense">
+          <h3>Total Expenses</h3>
+          <div class="amount" id="total-expense">₦0</div>
+          <div class="trend"><i class="fas fa-arrow-up" style="color: #dc2626;"></i> +8% this month</div>
+        </div>
+        <div class="financial-card profit">
+          <h3>Net Profit</h3>
+          <div class="amount" id="net-profit">₦0</div>
+          <div class="trend"><i class="fas fa-arrow-up" style="color: #3b82f6;"></i> Healthy margin</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <select id="month-filter">
+          <option value="">All Months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select id="type-filter">
+          <option value="">All Types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+        <input type="search" id="search-transaction" placeholder="Search transactions...">
+      </div>
+
+      <!-- Transactions Table -->
+      <div class="chart-container">
+        <h3 style="margin-top: 0;">Recent Transactions</h3>
+        <table class="transaction-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Category</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="transactions-body">
+            <tr><td colspan="6" style="text-align: center; padding: 40px; color: #999;">No transactions yet. Add your first transaction.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Transaction Modal -->
+  <div class="modal-overlay" id="transaction-modal">
+    <div class="modal">
+      <button class="close-modal" onclick="document.getElementById('transaction-modal').classList.remove('show')">&times;</button>
+      <h2>Add Transaction</h2>
+      <form id="transaction-form" novalidate>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="trans-date" required>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="trans-type" required onchange="updateCategories()">
+            <option value="">Select Type</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="trans-category" required>
+            <option value="">Select Category</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" id="trans-description" placeholder="e.g., Shipment to Lagos" required>
+        </div>
+        <div class="form-group">
+          <label>Amount (₦)</label>
+          <input type="number" id="trans-amount" placeholder="0" min="0" step="0.01" required>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn secondary" onclick="document.getElementById('transaction-modal').classList.remove('show')">Cancel</button>
+          <button type="submit" class="btn primary">Add Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAdmin, logoutAdmin } from './assets/admin.js';
+    import { ToastManager } from './assets/utils.js';
+    
+    const toastManager = new ToastManager();
+    const incomeCategories = ['Shipment Fees', 'Delivery Charges', 'Premium Services', 'Consultancy', 'Other Income'];
+    const expenseCategories = ['Fuel', 'Staff Salary', 'Maintenance', 'Equipment', 'Office Rent', 'Utilities', 'Insurance', 'Marketing', 'Other Expense'];
+    
+    let transactions = [];
+
+    // Initialize
+    async function init() {
+      await initAdmin();
+      setDefaultDate();
+      loadTransactions();
+      setupEventListeners();
+    }
+
+    function setDefaultDate() {
+      document.getElementById('trans-date').valueAsDate = new Date();
+    }
+
+    function updateCategories() {
+      const type = document.getElementById('trans-type').value;
+      const categorySelect = document.getElementById('trans-category');
+      const categories = type === 'income' ? incomeCategories : expenseCategories;
+      
+      categorySelect.innerHTML = '<option value="">Select Category</option>';
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
+      });
+    }
+
+    function setupEventListeners() {
+      document.getElementById('add-transaction-btn').addEventListener('click', () => {
+        document.getElementById('transaction-form').reset();
+        setDefaultDate();
+        updateCategories();
+        document.getElementById('transaction-modal').classList.add('show');
+      });
+
+      document.getElementById('transaction-form').addEventListener('submit', handleAddTransaction);
+      document.getElementById('month-filter').addEventListener('change', filterTransactions);
+      document.getElementById('type-filter').addEventListener('change', filterTransactions);
+      document.getElementById('search-transaction').addEventListener('input', filterTransactions);
+      document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
+    }
+
+    async function handleAddTransaction(e) {
+      e.preventDefault();
+      
+      const transaction = {
+        date: document.getElementById('trans-date').value,
+        type: document.getElementById('trans-type').value,
+        category: document.getElementById('trans-category').value,
+        description: document.getElementById('trans-description').value,
+        amount: parseFloat(document.getElementById('trans-amount').value),
+        id: Date.now().toString()
+      };
+
+      transactions.unshift(transaction);
+      localStorage.setItem('crown_transactions', JSON.stringify(transactions));
+      
+      toastManager.success('Transaction added successfully!');
+      document.getElementById('transaction-modal').classList.remove('show');
+      updateSummary();
+      renderTransactions();
+    }
+
+    function loadTransactions() {
+      const stored = localStorage.getItem('crown_transactions');
+      transactions = stored ? JSON.parse(stored) : [];
+      updateSummary();
+      renderTransactions();
+    }
+
+    function updateSummary() {
+      const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+      const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+      const netProfit = totalIncome - totalExpense;
+
+      document.getElementById('total-income').textContent = '₦' + totalIncome.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('total-expense').textContent = '₦' + totalExpense.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('net-profit').textContent = '₦' + netProfit.toLocaleString('en-NG', {minimumFractionDigits: 2});
+    }
+
+    function renderTransactions(toRender = transactions) {
+      const tbody = document.getElementById('transactions-body');
+      
+      if (toRender.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #999;">No transactions found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = toRender.map(t => `
+        <tr>
+          <td>${new Date(t.date).toLocaleDateString()}</td>
+          <td>${t.description}</td>
+          <td><span class="badge ${t.type}">${t.type.charAt(0).toUpperCase() + t.type.slice(1)}</span></td>
+          <td style="font-weight: 600; color: ${t.type === 'income' ? '#16a34a' : '#dc2626'};">
+            ${t.type === 'income' ? '+' : '-'}₦${t.amount.toLocaleString('en-NG', {minimumFractionDigits: 2})}
+          </td>
+          <td>${t.category}</td>
+          <td>
+            <button onclick="deleteTransaction('${t.id}')" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 14px;">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterTransactions() {
+      const monthFilter = document.getElementById('month-filter').value;
+      const typeFilter = document.getElementById('type-filter').value;
+      const searchTerm = document.getElementById('search-transaction').value.toLowerCase();
+
+      const filtered = transactions.filter(t => {
+        const transMonth = new Date(t.date).getMonth() + 1;
+        const matchMonth = !monthFilter || transMonth.toString() === monthFilter;
+        const matchType = !typeFilter || t.type === typeFilter;
+        const matchSearch = !searchTerm || t.description.toLowerCase().includes(searchTerm) || t.category.toLowerCase().includes(searchTerm);
+        return matchMonth && matchType && matchSearch;
+      });
+
+      renderTransactions(filtered);
+    }
+
+    window.deleteTransaction = function(id) {
+      if (confirm('Delete this transaction?')) {
+        transactions = transactions.filter(t => t.id !== id);
+        localStorage.setItem('crown_transactions', JSON.stringify(transactions));
+        updateSummary();
+        renderTransactions();
+        toastManager.success('Transaction deleted');
+      }
+    };
+
+    init();
+  </script>
+</body>
+</html>

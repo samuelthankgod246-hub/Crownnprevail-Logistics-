@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Invoice Generator - Create and Manage Invoices">
+  <title>Invoice Generator — CrownPrevail Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/admin.css">
+  <style>
+    .invoice-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+    .invoice-form { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .invoice-preview { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow-y: auto; max-height: 600px; }
+    .invoice-form h3 { margin: 0 0 20px; font-size: 18px; color: #1a2e4a; }
+    .invoice-form .form-group { margin-bottom: 16px; }
+    .invoice-form label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; font-size: 14px; }
+    .invoice-form input, .invoice-form select, .invoice-form textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+    .invoice-form textarea { resize: vertical; min-height: 60px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .items-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 12px; align-items: end; }
+    .item-row input { padding: 8px; }
+    .item-row button { background: #dc2626; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .item-row button:hover { background: #b91c1c; }
+    .add-item-btn { background: #3b82f6; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+    .add-item-btn:hover { background: #1d4ed8; }
+    .form-actions { display: flex; gap: 12px; margin-top: 20px; }
+    .form-actions .btn { flex: 1; padding: 12px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .btn-primary { background: #a68f50; color: #fff; }
+    .btn-primary:hover { background: #8b7240; }
+    .btn-secondary { background: #f0f0f0; color: #333; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .invoice-preview h4 { margin: 0 0 16px; font-size: 14px; color: #1a2e4a; }
+    .invoice-template { background: #f9f9f9; padding: 20px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; }
+    .invoice-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #a68f50; padding-bottom: 16px; }
+    .invoice-header h1 { margin: 0; font-size: 24px; color: #1a2e4a; }
+    .invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; font-size: 12px; }
+    .invoice-details-block { margin-bottom: 12px; }
+    .invoice-details-block strong { display: block; color: #a68f50; margin-bottom: 4px; }
+    .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .invoice-table th { background: #a68f50; color: #fff; padding: 10px; text-align: left; font-size: 12px; }
+    .invoice-table td { padding: 10px; border-bottom: 1px solid #eee; }
+    .invoice-table tr:last-child td { border-bottom: 2px solid #a68f50; }
+    .invoice-totals { margin-top: 20px; text-align: right; }
+    .total-row { display: grid; grid-template-columns: 1fr auto; gap: 20px; margin: 8px 0; }
+    .total-row.net { font-weight: bold; font-size: 14px; border-top: 2px solid #a68f50; border-bottom: 2px solid #a68f50; padding: 8px 0; }
+    .total-row.net strong { color: #a68f50; }
+    .ai-suggest-btn { background: #8b5cf6; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 10px; width: 100%; }
+    .ai-suggest-btn:hover { background: #7c3aed; }
+    @media (max-width: 1024px) {
+      .invoice-container { grid-template-columns: 1fr; }
+      .invoice-preview { max-height: none; }
+    }
+    @media (max-width: 768px) {
+      .item-row { grid-template-columns: 1fr; }
+      .row-2 { grid-template-columns: 1fr; }
+      .form-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/assets/images/logo/logo%20plain%20background.png" alt="CrownPrevail">
+        <p class="brand-name">CrownPrevail</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link">
+          <i class="fas fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="blogs.html" class="nav-link">
+          <i class="fas fa-blog"></i>
+          <span>Blog Posts</span>
+        </a>
+        <a href="team.html" class="nav-link">
+          <i class="fas fa-users"></i>
+          <span>Team</span>
+        </a>
+        <a href="inquiries.html" class="nav-link">
+          <i class="fas fa-envelope"></i>
+          <span>Inquiries</span>
+        </a>
+        <a href="analytics.html" class="nav-link">
+          <i class="fas fa-bar-chart"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="financials.html" class="nav-link">
+          <i class="fas fa-wallet"></i>
+          <span>Financials</span>
+        </a>
+        <a href="invoices.html" class="nav-link active">
+          <i class="fas fa-file-invoice"></i>
+          <span>Invoices</span>
+        </a>
+        <a href="ai-assistant.html" class="nav-link">
+          <i class="fas fa-robot"></i>
+          <span>AI Assistant</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="profile.html" class="nav-link">
+          <i class="fas fa-user-circle"></i>
+          <span>Profile</span>
+        </a>
+        <a href="#" id="logout-btn" class="nav-link">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h2><i class="fas fa-file-invoice"></i> Invoice Generator</h2>
+      </div>
+
+      <div class="invoice-container">
+        <!-- Invoice Form -->
+        <div class="invoice-form">
+          <h3>Create Invoice</h3>
+          
+          <button class="ai-suggest-btn" id="ai-suggest-btn">
+            <i class="fas fa-sparkles"></i> AI Auto-Fill
+          </button>
+
+          <form id="invoice-form">
+            <div class="form-group">
+              <label>Invoice Number</label>
+              <input type="text" id="invoice-number" placeholder="INV-001" required>
+            </div>
+
+            <div class="row-2">
+              <div class="form-group">
+                <label>Invoice Date</label>
+                <input type="date" id="invoice-date" required>
+              </div>
+              <div class="form-group">
+                <label>Due Date</label>
+                <input type="date" id="due-date" required>
+              </div>
+            </div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px; color: #1a2e4a;">Bill To</h4>
+
+            <div class="form-group">
+              <label>Customer Name</label>
+              <input type="text" id="customer-name" placeholder="e.g., ABC Logistics Ltd" required>
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="customer-email" placeholder="customer@example.com">
+            </div>
+
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="customer-phone" placeholder="+234 800 000 0000">
+            </div>
+
+            <div class="form-group">
+              <label>Address</label>
+              <textarea id="customer-address" placeholder="Customer address"></textarea>
+            </div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px; color: #1a2e4a;">Services/Items</h4>
+
+            <div class="items-section">
+              <div id="items-list"></div>
+              <button type="button" class="add-item-btn" id="add-item-btn">
+                <i class="fas fa-plus"></i> Add Item
+              </button>
+            </div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px; color: #1a2e4a;">Additional</h4>
+
+            <div class="row-2">
+              <div class="form-group">
+                <label>Tax Rate (%)</label>
+                <input type="number" id="tax-rate" value="0" min="0" max="100" step="0.01">
+              </div>
+              <div class="form-group">
+                <label>Discount (%)</label>
+                <input type="number" id="discount-rate" value="0" min="0" max="100" step="0.01">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea id="invoice-notes" placeholder="Payment terms, thank you note, etc."></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="clear-form-btn">Clear</button>
+              <button type="button" class="btn btn-primary" id="download-pdf-btn">
+                <i class="fas fa-download"></i> Download PDF
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Invoice Preview -->
+        <div class="invoice-preview">
+          <h4>Invoice Preview</h4>
+          <div class="invoice-template" id="invoice-preview">
+            <div class="invoice-header">
+              <h1>INVOICE</h1>
+            </div>
+            <div class="invoice-details">
+              <div>
+                <div class="invoice-details-block">
+                  <strong>CrownPrevail Logistics</strong>
+                  Suite 100, Business Hub<br>
+                  Lagos, Nigeria<br>
+                  info@crownprevail.com<br>
+                  +234 (0) 800 123 4567
+                </div>
+              </div>
+              <div>
+                <div class="invoice-details-block">
+                  <strong>Invoice #:</strong> <span id="prev-inv-num">INV-001</span><br>
+                  <strong>Date:</strong> <span id="prev-inv-date">-</span><br>
+                  <strong>Due Date:</strong> <span id="prev-due-date">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-details">
+              <div>
+                <div class="invoice-details-block">
+                  <strong>Bill To:</strong><br>
+                  <span id="prev-cust-name">Customer Name</span><br>
+                  <span id="prev-cust-address">-</span><br>
+                  <span id="prev-cust-email">-</span><br>
+                  <span id="prev-cust-phone">-</span>
+                </div>
+              </div>
+            </div>
+
+            <table class="invoice-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th style="text-align: right; width: 80px;">Qty</th>
+                  <th style="text-align: right; width: 100px;">Rate (₦)</th>
+                  <th style="text-align: right; width: 100px;">Amount (₦)</th>
+                </tr>
+              </thead>
+              <tbody id="prev-items">
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 20px; color: #999;">Add items to see preview</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="invoice-totals">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span id="prev-subtotal">₦0.00</span>
+              </div>
+              <div class="total-row" id="discount-row" style="display: none;">
+                <span>Discount:</span>
+                <span id="prev-discount">-₦0.00</span>
+              </div>
+              <div class="total-row" id="tax-row" style="display: none;">
+                <span>Tax:</span>
+                <span id="prev-tax">₦0.00</span>
+              </div>
+              <div class="total-row net">
+                <strong>Total Due:</strong>
+                <strong id="prev-total">₦0.00</strong>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #666;">
+              <strong>Thank you for your business!</strong><br>
+              <span id="prev-notes"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAdmin, logoutAdmin } from './assets/admin.js';
+    import { ToastManager } from './assets/utils.js';
+
+    const toastManager = new ToastManager();
+    let items = [];
+
+    // Initialize
+    async function init() {
+      await initAdmin();
+      setDefaultDates();
+      generateInvoiceNumber();
+      setupEventListeners();
+      addItem();
+    }
+
+    function setDefaultDates() {
+      const today = new Date();
+      document.getElementById('invoice-date').valueAsDate = today;
+      
+      const dueDate = new Date(today);
+      dueDate.setDate(dueDate.getDate() + 30);
+      document.getElementById('due-date').valueAsDate = dueDate;
+    }
+
+    function generateInvoiceNumber() {
+      const num = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      document.getElementById('invoice-number').value = `INV-${num}`;
+    }
+
+    function setupEventListeners() {
+      document.getElementById('add-item-btn').addEventListener('click', addItem);
+      document.getElementById('clear-form-btn').addEventListener('click', clearForm);
+      document.getElementById('download-pdf-btn').addEventListener('click', downloadPDF);
+      document.getElementById('ai-suggest-btn').addEventListener('click', aiAutoFill);
+
+      // Real-time preview update
+      document.querySelectorAll('input, textarea, select').forEach(el => {
+        el.addEventListener('input', updatePreview);
+        el.addEventListener('change', updatePreview);
+      });
+
+      document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
+    }
+
+    function addItem() {
+      const itemId = Date.now();
+      const itemRow = document.createElement('div');
+      itemRow.className = 'item-row';
+      itemRow.id = `item-${itemId}`;
+      itemRow.innerHTML = `
+        <input type="text" placeholder="Service description" class="item-desc" data-id="${itemId}">
+        <input type="number" placeholder="Qty" class="item-qty" value="1" min="1" data-id="${itemId}">
+        <input type="number" placeholder="Rate" class="item-rate" value="0" min="0" step="0.01" data-id="${itemId}">
+        <input type="number" placeholder="Amount" class="item-amount" readonly data-id="${itemId}">
+        <button type="button" onclick="removeItem('${itemId}')">Remove</button>
+      `;
+      
+      document.getElementById('items-list').appendChild(itemRow);
+
+      itemRow.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          calculateItemAmount(itemId);
+          updatePreview();
+        });
+      });
+
+      items.push({ id: itemId, desc: '', qty: 1, rate: 0 });
+    }
+
+    function calculateItemAmount(itemId) {
+      const qty = parseFloat(document.querySelector(`[data-id="${itemId}"].item-qty`)?.value || 0);
+      const rate = parseFloat(document.querySelector(`[data-id="${itemId}"].item-rate`)?.value || 0);
+      const amount = qty * rate;
+      document.querySelector(`[data-id="${itemId}"].item-amount`).value = amount.toFixed(2);
+    }
+
+    window.removeItem = function(itemId) {
+      document.getElementById(`item-${itemId}`).remove();
+      items = items.filter(i => i.id !== itemId);
+      updatePreview();
+    };
+
+    function updatePreview() {
+      // Update header info
+      document.getElementById('prev-inv-num').textContent = document.getElementById('invoice-number').value || 'INV-001';
+      document.getElementById('prev-inv-date').textContent = new Date(document.getElementById('invoice-date').value).toLocaleDateString() || '-';
+      document.getElementById('prev-due-date').textContent = new Date(document.getElementById('due-date').value).toLocaleDateString() || '-';
+
+      // Update bill to
+      document.getElementById('prev-cust-name').textContent = document.getElementById('customer-name').value || 'Customer Name';
+      document.getElementById('prev-cust-address').textContent = document.getElementById('customer-address').value || '-';
+      document.getElementById('prev-cust-email').textContent = document.getElementById('customer-email').value || '-';
+      document.getElementById('prev-cust-phone').textContent = document.getElementById('customer-phone').value || '-';
+
+      // Update items table
+      const itemsBody = document.getElementById('prev-items');
+      const itemRows = document.querySelectorAll('.item-row');
+      let subtotal = 0;
+
+      if (itemRows.length === 0) {
+        itemsBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #999;">Add items to see preview</td></tr>';
+      } else {
+        itemsBody.innerHTML = '';
+        itemRows.forEach(row => {
+          const id = row.id.replace('item-', '');
+          const desc = row.querySelector('.item-desc').value;
+          const qty = parseFloat(row.querySelector('.item-qty').value || 0);
+          const rate = parseFloat(row.querySelector('.item-rate').value || 0);
+          const amount = qty * rate;
+
+          if (desc && qty && rate) {
+            subtotal += amount;
+            itemsBody.innerHTML += `
+              <tr>
+                <td>${desc}</td>
+                <td style="text-align: right;">${qty}</td>
+                <td style="text-align: right;">₦${rate.toLocaleString('en-NG', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right;">₦${amount.toLocaleString('en-NG', {minimumFractionDigits: 2})}</td>
+              </tr>
+            `;
+          }
+        });
+      }
+
+      // Calculate totals
+      const taxRate = parseFloat(document.getElementById('tax-rate').value || 0);
+      const discountRate = parseFloat(document.getElementById('discount-rate').value || 0);
+
+      const discount = (subtotal * discountRate) / 100;
+      const afterDiscount = subtotal - discount;
+      const tax = (afterDiscount * taxRate) / 100;
+      const total = afterDiscount + tax;
+
+      // Update totals
+      document.getElementById('prev-subtotal').textContent = '₦' + subtotal.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      
+      if (discountRate > 0) {
+        document.getElementById('discount-row').style.display = 'grid';
+        document.getElementById('prev-discount').textContent = '-₦' + discount.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      } else {
+        document.getElementById('discount-row').style.display = 'none';
+      }
+
+      if (taxRate > 0) {
+        document.getElementById('tax-row').style.display = 'grid';
+        document.getElementById('prev-tax').textContent = '₦' + tax.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      } else {
+        document.getElementById('tax-row').style.display = 'none';
+      }
+
+      document.getElementById('prev-total').textContent = '₦' + total.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('prev-notes').textContent = document.getElementById('invoice-notes').value || 'Payment terms: Due upon receipt';
+    }
+
+    function clearForm() {
+      document.getElementById('invoice-form').reset();
+      document.getElementById('items-list').innerHTML = '';
+      items = [];
+      setDefaultDates();
+      generateInvoiceNumber();
+      addItem();
+      updatePreview();
+      toastManager.success('Form cleared');
+    }
+
+    async function aiAutoFill() {
+      const btn = document.getElementById('ai-suggest-btn');
+      const apiKey = localStorage.getItem('openrouter_api_key');
+      
+      if (!apiKey) {
+        toastManager.error('OpenRouter API key not configured. Please set it in browser storage.');
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Generating...';
+
+      try {
+        const apiKey = localStorage.getItem('openrouter_api_key') || '';
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'meta-llama/llama-3-8b-instruct:free',
+            messages: [{
+              role: 'user',
+              content: 'Generate a realistic logistics invoice data with: customer name, email, phone, address, and 3 shipping services with descriptions, quantities and rates in Nigerian Naira. Return ONLY valid JSON with fields: customerName, email, phone, address, items (array with desc, qty, rate), notes. No markdown, no explanation.'
+            }],
+            max_tokens: 500
+          })
+        });
+
+        const data = await response.json();
+        if (data.choices && data.choices[0]?.message?.content) {
+          const invoiceData = JSON.parse(data.choices[0].message.content);
+          
+          document.getElementById('customer-name').value = invoiceData.customerName || '';
+          document.getElementById('customer-email').value = invoiceData.email || '';
+          document.getElementById('customer-phone').value = invoiceData.phone || '';
+          document.getElementById('customer-address').value = invoiceData.address || '';
+          document.getElementById('invoice-notes').value = invoiceData.notes || '';
+
+          document.getElementById('items-list').innerHTML = '';
+          items = [];
+
+          invoiceData.items.forEach((item, idx) => {
+            addItem();
+            const row = document.querySelectorAll('.item-row')[idx];
+            row.querySelector('.item-desc').value = item.desc || '';
+            row.querySelector('.item-qty').value = item.qty || 1;
+            row.querySelector('.item-rate').value = item.rate || 0;
+            calculateItemAmount(row.id.replace('item-', ''));
+          });
+
+          updatePreview();
+          toastManager.success('Invoice auto-filled with AI data!');
+        } else {
+          throw new Error('Invalid response');
+        }
+      } catch (err) {
+        console.error('AI Error:', err);
+        toastManager.error('AI auto-fill failed. Please fill manually.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✨ AI Auto-Fill';
+      }
+    }
+
+    function downloadPDF() {
+      const invNum = document.getElementById('invoice-number').value;
+      const html = document.getElementById('invoice-preview').innerHTML;
+      
+      const printWindow = window.open('', '', 'height=600,width=900');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Invoice ${invNum}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .invoice-template { background: #fff; padding: 20px; }
+            .invoice-header { text-align: center; border-bottom: 2px solid #a68f50; padding-bottom: 16px; margin-bottom: 20px; }
+            .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .invoice-table th { background: #a68f50; color: #fff; padding: 10px; text-align: left; }
+            .invoice-table td { padding: 10px; border-bottom: 1px solid #eee; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          ${html}
+          <script>window.print();</script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
+    init();
+  </script>
+</body>
+</html>
