@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create and edit blog posts for CrownPrevail">
   <title>Edit Blog Post — CrownPrevail Admin</title>
   <link rel="stylesheet" href="assets/admin.css">
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -14,80 +15,96 @@
         <img src="../assets/images/logo/logo plain background.png" alt="CrownPrevail">
       </div>
       <nav class="sidebar-nav">
-        <a href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
-        <a href="blogs.html" class="active"><span class="icon">📝</span><span>Blog Posts</span></a>
-        <a href="inquiries.html"><span class="icon">✉️</span><span>Inquiries</span></a>
-        <a href="team.html"><span class="icon">👥</span><span>Team</span></a>
-        <a href="analytics.html"><span class="icon">📈</span><span>Analytics</span></a>
+        <a href="dashboard.html" aria-label="Dashboard"><span class="icon"><i class="fas fa-chart-line"></i></span><span>Dashboard</span></a>
+        <a href="blogs.html" class="active" aria-label="Blog Posts"><span class="icon"><i class="fas fa-pen-fancy"></i></span><span>Blog Posts</span></a>
+        <a href="inquiries.html" aria-label="Inquiries"><span class="icon"><i class="fas fa-envelope"></i></span><span>Inquiries</span></a>
+        <a href="team.html" aria-label="Team"><span class="icon"><i class="fas fa-users"></i></span><span>Team</span></a>
+        <a href="analytics.html" aria-label="Analytics"><span class="icon"><i class="fas fa-chart-bar"></i></span><span>Analytics</span></a>
       </nav>
       <div class="sidebar-footer">
-        <a href="../index.html" target="_blank"><span class="icon">🌐</span><span>View Site</span></a>
-        <a href="#" id="logout-link"><span class="icon">🚪</span><span>Sign Out</span></a>
+        <a href="../index.html" target="_blank" aria-label="View Website"><span class="icon"><i class="fas fa-globe"></i></span><span>View Site</span></a>
+        <a href="#" id="logout-link" aria-label="Sign Out"><span class="icon"><i class="fas fa-sign-out-alt"></i></span><span>Sign Out</span></a>
       </div>
     </aside>
 
     <main class="main-content" id="admin-content">
       <div class="breadcrumb">
-        <a href="blogs.html">Blog Posts</a> <span>/</span> <span id="page-title">New Post</span>
+        <a href="blogs.html"><i class="fas fa-list"></i> Blog Posts</a> <span>/</span> <span class="active" id="page-title">New Post</span>
       </div>
 
       <div class="card form-card">
         <div class="card-header">
-          <h3 id="form-title">Create New Post</h3>
+          <h3 id="form-title"><i class="fas fa-pen"></i> Create New Post</h3>
         </div>
         <div class="card-body">
           <div id="alert-message" class="alert"></div>
-          <form id="blog-form">
+          <form id="blog-form" novalidate>
             <div class="form-row">
               <div class="form-group">
-                <label for="title">Title</label>
-                <input type="text" id="title" placeholder="Post title" required>
+                <label for="title">Title <span style="color: #dc2626;">*</span></label>
+                <input type="text" id="title" name="title" placeholder="Post title" required maxlength="200">
+                <div class="error-message"></div>
               </div>
               <div class="form-group">
                 <label for="slug">Slug</label>
-                <input type="text" id="slug" placeholder="post-title-slug">
+                <input type="text" id="slug" name="slug" placeholder="post-title-slug" maxlength="200">
                 <div class="hint">Leave empty to auto-generate from title</div>
+                <div class="error-message"></div>
               </div>
             </div>
 
             <div class="form-row-3">
               <div class="form-group">
                 <label for="author">Author</label>
-                <input type="text" id="author" placeholder="Author name">
+                <input type="text" id="author" name="author" placeholder="Author name" maxlength="100">
+                <div class="error-message"></div>
               </div>
               <div class="form-group">
                 <label for="category">Category</label>
-                <input type="text" id="category" placeholder="e.g. Logistics, News">
+                <select id="category" name="category">
+                  <option value="">Select a category</option>
+                  <option value="Logistics">Logistics</option>
+                  <option value="News">News</option>
+                  <option value="Tips">Tips & Tricks</option>
+                  <option value="Industry">Industry</option>
+                  <option value="Other">Other</option>
+                </select>
+                <div class="error-message"></div>
               </div>
               <div class="form-group">
                 <label for="image">Featured Image URL</label>
-                <input type="text" id="image" placeholder="https://example.com/image.jpg">
+                <input type="url" id="image" name="image" placeholder="https://example.com/image.jpg">
+                <div class="error-message"></div>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label for="excerpt">Excerpt / Short Description</label>
-                <textarea id="excerpt" rows="3" placeholder="Brief summary of the post..."></textarea>
+                <label for="excerpt">Excerpt / Summary <span style="color: #dc2626;">*</span></label>
+                <textarea id="excerpt" name="excerpt" rows="3" placeholder="Brief summary of the post..." maxlength="300" required></textarea>
+                <div class="hint" id="excerpt-count">0 / 300 characters</div>
+                <div class="error-message"></div>
               </div>
               <div class="form-group">
                 <label>Publish Status</label>
-                <div style="padding-top:8px;">
+                <div style="padding-top:12px;">
                   <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
-                    <input type="checkbox" id="published" checked> Published
+                    <input type="checkbox" id="published" name="published" checked>
+                    <span>Publish this post</span>
                   </label>
                 </div>
               </div>
             </div>
 
             <div class="form-group">
-              <label for="editor">Content</label>
+              <label for="editor">Content <span style="color: #dc2626;">*</span></label>
               <div id="editor"></div>
+              <div class="error-message" id="content-error"></div>
             </div>
 
             <div class="form-actions">
-              <a href="blogs.html" class="btn btn-outline">Cancel</a>
-              <button type="submit" id="save-btn" class="btn btn-gold" style="width:auto;">Save Post</button>
+              <a href="blogs.html" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Cancel</a>
+              <button type="submit" id="save-btn" class="btn btn-gold" style="width:auto;"><i class="fas fa-save"></i> Save Post</button>
             </div>
           </form>
         </div>
@@ -98,11 +115,15 @@
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
   <script type="module">
     import { requireAuth, getDocument, addDocument, updateDocument, slugify, logoutAdmin } from './assets/admin.js';
+    import { toastManager, FormValidator, validators } from './assets/utils.js';
+    
     requireAuth();
 
     document.getElementById('logout-link').addEventListener('click', (e) => {
       e.preventDefault();
-      logoutAdmin();
+      if (confirm('Are you sure? Any unsaved changes will be lost.')) {
+        logoutAdmin();
+      }
     });
 
     const quill = new Quill('#editor', {
@@ -126,34 +147,54 @@
     const form = document.getElementById('blog-form');
     const saveBtn = document.getElementById('save-btn');
     const alertEl = document.getElementById('alert-message');
+    const excerptCount = document.getElementById('excerpt-count');
+    const contentError = document.getElementById('content-error');
 
+    // Form validation
+    const validator = new FormValidator(form);
+    validator.addField('title', [validators.required, validators.minLength(3), validators.maxLength(200)]);
+    validator.addField('excerpt', [validators.required, validators.maxLength(300)]);
+
+    // Excerpt counter
+    document.getElementById('excerpt').addEventListener('input', (e) => {
+      const count = e.target.value.length;
+      excerptCount.textContent = `${count} / 300 characters`;
+    });
+
+    // Load post if editing
     if (postId) {
       document.getElementById('page-title').textContent = 'Edit Post';
-      document.getElementById('form-title').textContent = 'Edit Blog Post';
-      saveBtn.textContent = 'Update Post';
+      document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Blog Post';
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> Update Post';
       loadPost(postId);
     }
 
     async function loadPost(id) {
-      const post = await getDocument('blog_posts', id);
-      if (!post) {
-        alertEl.className = 'alert alert-error';
-        alertEl.textContent = 'Post not found.';
-        alertEl.style.display = 'block';
-        return;
-      }
-      document.getElementById('title').value = post.title || '';
-      document.getElementById('slug').value = post.slug || '';
-      document.getElementById('author').value = post.author || '';
-      document.getElementById('category').value = post.category || '';
-      document.getElementById('image').value = post.image || '';
-      document.getElementById('excerpt').value = post.excerpt || '';
-      document.getElementById('published').checked = post.published !== false;
-      if (post.content) {
-        quill.root.innerHTML = post.content;
+      try {
+        const post = await getDocument('blog_posts', id);
+        if (!post) {
+          toastManager.error('Post not found');
+          setTimeout(() => window.location.href = 'blogs.html', 2000);
+          return;
+        }
+        document.getElementById('title').value = post.title || '';
+        document.getElementById('slug').value = post.slug || '';
+        document.getElementById('author').value = post.author || '';
+        document.getElementById('category').value = post.category || '';
+        document.getElementById('image').value = post.image || '';
+        document.getElementById('excerpt').value = post.excerpt || '';
+        document.getElementById('published').checked = post.published !== false;
+        excerptCount.textContent = `${(post.excerpt || '').length} / 300 characters`;
+        if (post.content) {
+          quill.root.innerHTML = post.content;
+        }
+      } catch (err) {
+        toastManager.error('Failed to load post');
+        console.error(err);
       }
     }
 
+    // Auto-generate slug from title
     document.getElementById('title').addEventListener('input', function() {
       const slugField = document.getElementById('slug');
       if (!slugField.dataset.manual) {
@@ -165,44 +206,57 @@
       this.dataset.manual = this.value.length > 0;
     });
 
+    // Form submission
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      saveBtn.disabled = true;
-      saveBtn.textContent = postId ? 'Updating...' : 'Saving...';
-      alertEl.className = 'alert';
-      alertEl.style.display = 'none';
 
-      const data = {
-        title: document.getElementById('title').value.trim(),
-        slug: document.getElementById('slug').value.trim() || slugify(document.getElementById('title').value.trim()),
-        author: document.getElementById('author').value.trim() || 'Admin',
-        category: document.getElementById('category').value.trim() || 'General',
-        image: document.getElementById('image').value.trim(),
-        excerpt: document.getElementById('excerpt').value.trim(),
-        content: quill.root.innerHTML,
-        published: document.getElementById('published').checked
-      };
-
-      let result;
-      if (postId) {
-        result = await updateDocument('blog_posts', postId, data);
+      // Validate
+      const validation = validator.validate();
+      const content = quill.root.innerHTML.trim();
+      if (!content || content === '<p><br></p>') {
+        contentError.textContent = 'Content is required';
+        toastManager.error('Please write some content');
+        return;
       } else {
-        result = await addDocument('blog_posts', data);
+        contentError.textContent = '';
       }
 
-      if (result.success) {
-        alertEl.className = 'alert alert-success';
-        alertEl.textContent = postId ? 'Post updated successfully!' : 'Post created successfully!';
-        alertEl.style.display = 'block';
-        if (!postId) {
-          setTimeout(() => window.location.href = 'blogs.html', 1500);
+      if (!validation.valid) return;
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = postId ? '<i class="fas fa-spinner fa-spin"></i> Updating...' : '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      try {
+        const data = {
+          title: document.getElementById('title').value.trim(),
+          slug: document.getElementById('slug').value.trim() || slugify(document.getElementById('title').value.trim()),
+          author: document.getElementById('author').value.trim() || 'Admin',
+          category: document.getElementById('category').value.trim() || 'General',
+          image: document.getElementById('image').value.trim(),
+          excerpt: document.getElementById('excerpt').value.trim(),
+          content: content,
+          published: document.getElementById('published').checked
+        };
+
+        let result;
+        if (postId) {
+          result = await updateDocument('blog_posts', postId, data);
+        } else {
+          result = await addDocument('blog_posts', data);
         }
-      } else {
-        alertEl.className = 'alert alert-error';
-        alertEl.textContent = 'Error: ' + result.error;
-        alertEl.style.display = 'block';
+
+        if (result.success) {
+          toastManager.success(postId ? 'Post updated successfully!' : 'Post created successfully!');
+          if (!postId) {
+            setTimeout(() => window.location.href = 'blogs.html', 1500);
+          }
+        } else {
+          throw new Error(result.error);
+        }
+      } catch (err) {
+        toastManager.error('Failed to save post: ' + err.message);
         saveBtn.disabled = false;
-        saveBtn.textContent = postId ? 'Update Post' : 'Save Post';
+        saveBtn.innerHTML = postId ? '<i class="fas fa-save"></i> Update Post' : '<i class="fas fa-save"></i> Save Post';
       }
     });
   </script>

@@ -14,15 +14,15 @@
         <img src="../assets/images/logo/logo plain background.png" alt="CrownPrevail">
       </div>
       <nav class="sidebar-nav">
-        <a href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
-        <a href="blogs.html"><span class="icon">📝</span><span>Blog Posts</span></a>
-        <a href="inquiries.html"><span class="icon">✉️</span><span>Inquiries</span></a>
-        <a href="team.html"><span class="icon">👥</span><span>Team</span></a>
-        <a href="analytics.html" class="active"><span class="icon">📈</span><span>Analytics</span></a>
+        <a href="dashboard.html" aria-label="Dashboard"><span class="icon"><i class="fas fa-chart-line"></i></span><span>Dashboard</span></a>
+        <a href="blogs.html" aria-label="Blog Posts"><span class="icon"><i class="fas fa-pen-fancy"></i></span><span>Blog Posts</span></a>
+        <a href="inquiries.html" aria-label="Inquiries"><span class="icon"><i class="fas fa-envelope"></i></span><span>Inquiries</span></a>
+        <a href="team.html" aria-label="Team"><span class="icon"><i class="fas fa-users"></i></span><span>Team</span></a>
+        <a href="analytics.html" class="active" aria-label="Analytics"><span class="icon"><i class="fas fa-chart-bar"></i></span><span>Analytics</span></a>
       </nav>
       <div class="sidebar-footer">
-        <a href="../index.html" target="_blank"><span class="icon">🌐</span><span>View Site</span></a>
-        <a href="#" id="logout-link"><span class="icon">🚪</span><span>Sign Out</span></a>
+        <a href="../index.html" target="_blank" aria-label="View Website"><span class="icon"><i class="fas fa-globe"></i></span><span>View Site</span></a>
+        <a href="#" id="logout-link" aria-label="Sign Out"><span class="icon"><i class="fas fa-sign-out-alt"></i></span><span>Sign Out</span></a>
       </div>
     </aside>
 
@@ -32,19 +32,58 @@
       </div>
 
       <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-        <div class="stat-card"><div class="stat-icon">📬</div><div class="stat-number" id="total-all">—</div><div class="stat-label">Total Submissions</div></div>
-        <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-number" id="total-blogs">—</div><div class="stat-label">Blog Posts</div></div>
-        <div class="stat-card"><div class="stat-icon">👤</div><div class="stat-number" id="total-team">—</div><div class="stat-label">Team Members</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-inbox"></i></div><div class="stat-number" id="total-all">—</div><div class="stat-label">Total Submissions</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-pen-fancy"></i></div><div class="stat-number" id="total-blogs">—</div><div class="stat-label">Blog Posts</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-number" id="total-team">—</div><div class="stat-label">Team Members</div></div>
+        <div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-number" id="avg-daily">—</div><div class="stat-label">Avg Daily Submissions</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <h3><i class="fas fa-filter"></i> Date Range Filter</h3>
+        </div>
+        <div class="card-body" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label for="date-from" style="font-size: 13px; font-weight: 600;">From:</label>
+            <input type="date" id="date-from" style="padding: 8px 12px; border: 1.5px solid #dde1e6; border-radius: 6px;">
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label for="date-to" style="font-size: 13px; font-weight: 600;">To:</label>
+            <input type="date" id="date-to" style="padding: 8px 12px; border: 1.5px solid #dde1e6; border-radius: 6px;">
+          </div>
+          <button id="filter-btn" class="btn btn-sm btn-outline"><i class="fas fa-check"></i> Apply</button>
+          <button id="reset-btn" class="btn btn-sm btn-outline"><i class="fas fa-redo"></i> Reset</button>
+        </div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
         <div class="card">
-          <div class="card-header"><h3>Submissions by Type</h3></div>
+          <div class="card-header"><h3><i class="fas fa-chart-doughnut"></i> Submissions by Type</h3></div>
           <div class="card-body"><canvas id="typeChart" height="250"></canvas></div>
         </div>
         <div class="card">
-          <div class="card-header"><h3>Submission Trends</h3></div>
+          <div class="card-header"><h3><i class="fas fa-chart-line"></i> Submission Trends (Last 30 Days)</h3></div>
           <div class="card-body"><canvas id="trendChart" height="250"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-list"></i> Recent Activity</h3></div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Details</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="activity-tbody">
+                <tr><td colspan="3" style="text-align: center; padding: 40px; color: #999;"><div class="spinner" style="margin: 0 auto 8px;"></div>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </main>
@@ -52,14 +91,23 @@
 
   <script type="module">
     import { requireAuth, getCollection, getCount, formatDate, logoutAdmin } from './assets/admin.js';
+    import { toastManager, showLoadingSkeleton, isDateInRange } from './assets/utils.js';
+    
     requireAuth();
 
     document.getElementById('logout-link').addEventListener('click', (e) => {
       e.preventDefault();
-      logoutAdmin();
+      if (confirm('Are you sure you want to sign out?')) {
+        logoutAdmin();
+      }
     });
 
+    let allData = {};
+    let charts = {};
+
     async function loadAnalytics() {
+      showLoadingSkeleton(document.getElementById('activity-tbody'), 3, 3);
+
       const [contacts, quotes, subs, tracking, comments, blogs, team] = await Promise.all([
         getCollection('contact_inquiries', 'createdAt'),
         getCollection('quote_requests', 'createdAt'),
@@ -70,33 +118,96 @@
         getCount('team_members')
       ]);
 
-      const total = contacts.length + quotes.length + subs.length + tracking.length + comments.length;
-      document.getElementById('total-all').textContent = total;
-      document.getElementById('total-blogs').textContent = blogs;
-      document.getElementById('total-team').textContent = team;
+      allData = {
+        contacts: contacts.reverse(),
+        quotes: quotes.reverse(),
+        subs: subs.reverse(),
+        tracking: tracking.reverse(),
+        comments: comments.reverse(),
+        blogs,
+        team
+      };
 
-      // ── Pie Chart ──
-      new Chart(document.getElementById('typeChart'), {
-        type: 'doughnut',
-        data: {
-          labels: ['Contact ('+contacts.length+')', 'Quotes ('+quotes.length+')', 'Newsletter ('+subs.length+')', 'Tracking ('+tracking.length+')', 'Comments ('+comments.length+')'],
-          datasets: [{
-            data: [contacts.length, quotes.length, subs.length, tracking.length, comments.length],
-            backgroundColor: ['#3b82f6','#a68f50','#16a34a','#f59e0b','#8b5cf6']
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      updateStats();
+      createCharts();
+      loadRecentActivity();
+    }
+
+    function updateStats() {
+      const total = allData.contacts.length + allData.quotes.length + allData.subs.length + allData.tracking.length + allData.comments.length;
+      document.getElementById('total-all').textContent = total;
+      document.getElementById('total-blogs').textContent = allData.blogs;
+      document.getElementById('total-team').textContent = allData.team;
+
+      // Calculate average daily submissions (last 30 days)
+      const now = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+
+      const allItems = [...allData.contacts, ...allData.quotes, ...allData.subs, ...allData.tracking, ...allData.comments];
+      const last30Days = allItems.filter(item => {
+        const d = item.createdAt?.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
+        return d >= thirtyDaysAgo && d <= now;
       });
 
-      // ── Trend Chart (last 7 days) ──
-      const allItems = [...contacts, ...quotes, ...subs, ...tracking, ...comments];
+      const avgDaily = last30Days.length > 0 ? Math.round(last30Days.length / 30) : 0;
+      document.getElementById('avg-daily').textContent = avgDaily;
+    }
+
+    function createCharts() {
+      const ctx1 = document.getElementById('typeChart')?.getContext('2d');
+      const ctx2 = document.getElementById('trendChart')?.getContext('2d');
+
+      if (!ctx1 || !ctx2) return;
+
+      // Destroy existing charts
+      if (charts.type) charts.type.destroy();
+      if (charts.trend) charts.trend.destroy();
+
+      // Type chart
+      charts.type = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: [
+            `Contact (${allData.contacts.length})`,
+            `Quotes (${allData.quotes.length})`,
+            `Newsletter (${allData.subs.length})`,
+            `Tracking (${allData.tracking.length})`,
+            `Comments (${allData.comments.length})`
+          ],
+          datasets: [{
+            data: [
+              allData.contacts.length,
+              allData.quotes.length,
+              allData.subs.length,
+              allData.tracking.length,
+              allData.comments.length
+            ],
+            backgroundColor: ['#3b82f6', '#a68f50', '#16a34a', '#f59e0b', '#8b5cf6'],
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { padding: 16, font: { size: 13 } } }
+          }
+        }
+      });
+
+      // Trend chart (last 30 days)
+      const now = new Date();
       const days = {};
-      for (let i = 6; i >= 0; i--) {
+      for (let i = 29; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         days[key] = 0;
       }
+
+      const allItems = [...allData.contacts, ...allData.quotes, ...allData.subs, ...allData.tracking, ...allData.comments];
       allItems.forEach(item => {
         if (item.createdAt) {
           const d = item.createdAt.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
@@ -105,22 +216,154 @@
         }
       });
 
-      new Chart(document.getElementById('trendChart'), {
+      charts.trend = new Chart(ctx2, {
         type: 'line',
         data: {
           labels: Object.keys(days),
           datasets: [{
-            label: 'Submissions',
+            label: 'Daily Submissions',
             data: Object.values(days),
             borderColor: '#a68f50',
             backgroundColor: 'rgba(166,143,80,0.1)',
             fill: true,
-            tension: 0.3
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#a68f50',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2
           }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          }
+        }
       });
     }
+
+    function loadRecentActivity() {
+      const tbody = document.getElementById('activity-tbody');
+      const allItems = [
+        ...allData.contacts.map(c => ({ type: 'contact', label: `Contact from ${c.name}`, date: c.createdAt })),
+        ...allData.quotes.map(q => ({ type: 'quote', label: `Quote from ${q.name || q.fullName}`, date: q.createdAt })),
+        ...allData.subs.map(s => ({ type: 'newsletter', label: `Newsletter signup: ${s.email || s.newsletterEmail}`, date: s.createdAt })),
+        ...allData.tracking.map(t => ({ type: 'tracking', label: `Tracking: ${t.trackingNumber || t['tracking-number']}`, date: t.createdAt })),
+        ...allData.comments.map(c => ({ type: 'comment', label: `Comment from ${c.name}`, date: c.createdAt }))
+      ].sort((a, b) => {
+        const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+        const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+        return dateB - dateA;
+      }).slice(0, 20);
+
+      if (allItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #999;">No recent activity</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = allItems.map(item => {
+        const iconMap = {
+          contact: 'envelope',
+          quote: 'file-invoice',
+          newsletter: 'envelope-open',
+          tracking: 'box',
+          comment: 'comment'
+        };
+        return `
+          <tr>
+            <td><span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;"><i class="fas fa-${iconMap[item.type] || 'circle'}"></i> ${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</span></td>
+            <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis;">${item.label}</td>
+            <td style="font-size: 12px; color: #888; white-space: nowrap;">${formatDate(item.date)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Date filter
+    const dateFrom = document.getElementById('date-from');
+    const dateTo = document.getElementById('date-to');
+
+    document.getElementById('filter-btn').addEventListener('click', () => {
+      if (!dateFrom.value || !dateTo.value) {
+        toastManager.error('Please select both dates');
+        return;
+      }
+
+      const startDate = new Date(dateFrom.value);
+      const endDate = new Date(dateTo.value);
+      endDate.setHours(23, 59, 59, 999);
+
+      if (startDate > endDate) {
+        toastManager.error('Start date must be before end date');
+        return;
+      }
+
+      // Filter data
+      const filtered = {
+        contacts: allData.contacts.filter(c => isDateInRange(c.createdAt, startDate, endDate)),
+        quotes: allData.quotes.filter(q => isDateInRange(q.createdAt, startDate, endDate)),
+        subs: allData.subs.filter(s => isDateInRange(s.createdAt, startDate, endDate)),
+        tracking: allData.tracking.filter(t => isDateInRange(t.createdAt, startDate, endDate)),
+        comments: allData.comments.filter(c => isDateInRange(c.createdAt, startDate, endDate))
+      };
+
+      // Update with filtered data
+      const total = filtered.contacts.length + filtered.quotes.length + filtered.subs.length + filtered.tracking.length + filtered.comments.length;
+      document.getElementById('total-all').textContent = total;
+
+      // Create filtered charts
+      const ctx1 = document.getElementById('typeChart')?.getContext('2d');
+      const ctx2 = document.getElementById('trendChart')?.getContext('2d');
+
+      if (charts.type) charts.type.destroy();
+      if (charts.trend) charts.trend.destroy();
+
+      // Type chart with filtered data
+      charts.type = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: [
+            `Contact (${filtered.contacts.length})`,
+            `Quotes (${filtered.quotes.length})`,
+            `Newsletter (${filtered.subs.length})`,
+            `Tracking (${filtered.tracking.length})`,
+            `Comments (${filtered.comments.length})`
+          ],
+          datasets: [{
+            data: [
+              filtered.contacts.length,
+              filtered.quotes.length,
+              filtered.subs.length,
+              filtered.tracking.length,
+              filtered.comments.length
+            ],
+            backgroundColor: ['#3b82f6', '#a68f50', '#16a34a', '#f59e0b', '#8b5cf6'],
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+
+      toastManager.success(`Filtered data: ${startDate.toDateString()} to ${endDate.toDateString()}`);
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      dateFrom.value = '';
+      dateTo.value = '';
+      createCharts();
+      updateStats();
+      loadRecentActivity();
+      toastManager.info('Filter reset');
+    });
 
     loadAnalytics();
   </script>
