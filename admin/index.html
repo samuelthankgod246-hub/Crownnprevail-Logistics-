@@ -38,13 +38,16 @@
 
   <script type="module">
     import { loginAdmin } from './assets/admin.js';
-    import { FormValidator, validators } from './assets/utils.js';
+    import { FormValidator, validators, ToastManager } from './assets/utils.js';
 
     const form = document.getElementById('login-form');
     const btn = document.getElementById('login-btn');
     const alertEl = document.getElementById('alert-message');
     const spinner = document.getElementById('spinner');
     const btnText = document.getElementById('btn-text');
+
+    // Initialize toast manager for error notifications
+    const toastManager = new ToastManager();
 
     const validator = new FormValidator(form);
     validator.addField('email', [validators.required, validators.email]);
@@ -70,8 +73,21 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // Clear previous alert
+      alertEl.className = 'alert';
+      alertEl.textContent = '';
+
       const validation = validator.validate();
-      if (!validation.valid) return;
+      if (!validation.valid) {
+        // Show first error in alert
+        const firstError = Object.values(validation.errors)[0];
+        if (firstError) {
+          alertEl.className = 'alert alert-error show';
+          alertEl.textContent = firstError;
+          alertEl.style.display = 'block';
+        }
+        return;
+      }
 
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
@@ -79,27 +95,44 @@
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
       spinner.style.display = 'inline-block';
-      spinner.classList.add('fa-spinner');
-      spinner.classList.add('fa-spin');
       btnText.textContent = 'Signing in...';
-      alertEl.className = 'alert';
-      alertEl.style.display = 'none';
 
-      const result = await loginAdmin(email, password);
+      try {
+        const result = await loginAdmin(email, password);
 
-      if (result.success) {
-        window.location.href = 'dashboard.html';
-      } else {
+        if (result.success) {
+          // Show success message briefly before redirect
+          toastManager.success('Signed in successfully! Redirecting...');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } else {
+          alertEl.className = 'alert alert-error show';
+          alertEl.textContent = result.error || 'Login failed. Please try again.';
+          alertEl.style.display = 'block';
+          toastManager.error(result.error || 'Login failed');
+          
+          btn.disabled = false;
+          btn.setAttribute('aria-busy', 'false');
+          spinner.style.display = 'none';
+          btnText.textContent = 'Sign In';
+        }
+      } catch (err) {
         alertEl.className = 'alert alert-error show';
-        alertEl.textContent = result.error;
+        alertEl.textContent = 'An unexpected error occurred. Please try again.';
         alertEl.style.display = 'block';
+        toastManager.error('An unexpected error occurred');
+        console.error('Login error:', err);
+        
         btn.disabled = false;
         btn.setAttribute('aria-busy', 'false');
         spinner.style.display = 'none';
-        spinner.classList.remove('fa-spinner', 'fa-spin');
         btnText.textContent = 'Sign In';
       }
     });
+
+    // Focus email field on load
+    document.getElementById('email').focus();
   </script>
 </body>
 </html>

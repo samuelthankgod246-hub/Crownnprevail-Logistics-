@@ -51,6 +51,7 @@ class ToastManager {
 }
 
 export const toastManager = new ToastManager();
+export { ToastManager };
 
 // ── Form Validation ─────────────────────────────────────
 export const validators = {
