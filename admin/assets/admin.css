@@ -49,6 +49,13 @@ a { text-decoration: none; color: inherit; }
   margin: 0 auto;
   object-fit: contain;
 }
+.login-card .logo .brand-name {
+  margin: 12px 0 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a2e4a;
+  letter-spacing: 0.5px;
+}
 .login-card .form-group { 
   margin-bottom: 20px;
 }
@@ -141,6 +148,14 @@ a { text-decoration: none; color: inherit; }
 .sidebar { width: 250px; background: linear-gradient(180deg, #1a2e4a 0%, #162240 100%); color: #fff; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; box-shadow: 2px 0 8px rgba(0,0,0,0.1); transition: width 0.3s; }
 .sidebar-brand { padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .sidebar-brand img { width: 110px; max-width: 100%; height: auto; display: block; margin: 0 auto; object-fit: contain; filter: brightness(0) invert(1); transition: transform 0.2s; }
+.sidebar-brand .brand-name { 
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+  letter-spacing: 0.3px;
+  display: none;
+}
 .sidebar-brand img:hover { transform: scale(1.05); }
 .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
 .sidebar-nav::-webkit-scrollbar { width: 6px; }
@@ -284,10 +299,15 @@ table td input[type="checkbox"] { cursor: pointer; }
 .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Responsive ──────────────────────────────── */
+@media (min-width: 769px) {
+  .sidebar-brand .brand-name { display: block; }
+}
+
 @media (max-width: 768px) {
   .sidebar { width: 70px; }
   .sidebar-brand { padding: 12px; }
   .sidebar-brand img { width: 35px; max-width: 100%; }
+  .sidebar-brand .brand-name { display: none !important; }
   .sidebar-nav a { padding: 14px 8px; justify-content: center; min-height: 48px; }
   .sidebar-nav a span:nth-child(2) { display: none; }
   .sidebar-nav a:hover { background: rgba(166,143,80,0.15); border-left-color: #a68f50; }
