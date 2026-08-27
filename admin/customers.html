@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers — CrownPrevail Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/admin.css">
+  <style>
+    .customer-card { display: flex; gap: 16px; padding: 16px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 12px; }
+    .customer-card .avatar { width: 50px; height: 50px; border-radius: 50%; background: #a68f50; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .customer-card .info { flex: 1; }
+    .customer-card .name { font-weight: 700; color: #1a2e4a; }
+    .customer-card .email { font-size: 12px; color: #888; }
+    .customer-card .loyalty { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .loyalty-platinum { background: #f3e8ff; color: #7e22ce; }
+    .loyalty-gold { background: #fef3c7; color: #92400e; }
+    .loyalty-silver { background: #e0e7ff; color: #3730a3; }
+    .loyalty-bronze { background: #f3e5f5; color: #754c8c; }
+    .stats-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    @media (max-width: 768px) { .customer-card { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <div class="admin-wrapper">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><img src="/assets/images/logo/logo%20plain%20background.png" alt="CrownPrevail"><p class="brand-name">CrownPrevail</p></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+        <a href="blogs.html" class="nav-link"><i class="fas fa-pen-fancy"></i><span>Blog Posts</span></a>
+        <a href="team.html" class="nav-link"><i class="fas fa-users"></i><span>Team</span></a>
+        <a href="inquiries.html" class="nav-link"><i class="fas fa-envelope"></i><span>Inquiries</span></a>
+        <a href="analytics.html" class="nav-link"><i class="fas fa-bar-chart"></i><span>Analytics</span></a>
+        <a href="financials.html" class="nav-link"><i class="fas fa-wallet"></i><span>Financials</span></a>
+        <a href="invoices.html" class="nav-link"><i class="fas fa-file-invoice"></i><span>Invoices</span></a>
+        <a href="ai-assistant.html" class="nav-link"><i class="fas fa-robot"></i><span>AI Assistant</span></a>
+        <a href="shipments.html" class="nav-link"><i class="fas fa-boxes"></i><span>Shipments</span></a>
+        <a href="notifications.html" class="nav-link"><i class="fas fa-bell"></i><span>Notifications</span></a>
+        <a href="reports.html" class="nav-link"><i class="fas fa-file-export"></i><span>Reports</span></a>
+        <a href="customers.html" class="nav-link active"><i class="fas fa-user-friends"></i><span>Customers</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="../index.html" target="_blank"><i class="fas fa-globe"></i><span>View Site</span></a>
+        <a href="#" id="logout-btn" aria-label="Sign Out"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h2><i class="fas fa-user-friends"></i> Customers</h2></div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:#e0f2fe;color:#075985;"><i class="fas fa-users"></i></div><div class="stat-number" id="total-customers">0</div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#f3e8ff;color:#7e22ce;"><i class="fas fa-crown"></i></div><div class="stat-number" id="platinum">0</div><div class="stat-label">Platinum</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fef3c7;color:#92400e;"><i class="fas fa-gem"></i></div><div class="stat-number" id="gold">0</div><div class="stat-label">Gold</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#e0e7ff;color:#3730a3;"><i class="fas fa-star"></i></div><div class="stat-number" id="silver">0</div><div class="stat-label">Silver</div></div>
+      </div>
+      <div class="card"><div class="card-header"><h3><i class="fas fa-list"></i> Customer Directory</h3><input type="text" id="search-customer" placeholder="Search customers..." style="padding:8px 12px;border:1.5px solid #dde1e6;border-radius:6px;width:250px;"></div>
+        <div class="card-body" id="customers-list"><p style="text-align:center;color:#999;padding:40px;">No customers found. Customer data will appear here.</p></div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth, logoutAdmin } from './assets/admin.js';
+    import { toastManager } from './assets/utils.js';
+    requireAuth();
+    let customers = [];
+    async function init() {
+      customers = JSON.parse(localStorage.getItem('crown_customers') || '[]');
+      updateStats();
+      renderCustomers();
+      document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
+      document.getElementById('search-customer').addEventListener('input', e => renderCustomers(customers.filter(c => c.name?.toLowerCase().includes(e.target.value.toLowerCase()) || c.email?.toLowerCase().includes(e.target.value.toLowerCase()))));
+    }
+    function updateStats() {
+      document.getElementById('total-customers').textContent = customers.length;
+      const platinum = customers.filter(c => c.loyaltyPoints >= 10000).length;
+      const gold = customers.filter(c => c.loyaltyPoints >= 5000 && c.loyaltyPoints < 10000).length;
+      const silver = customers.filter(c => c.loyaltyPoints >= 1000 && c.loyaltyPoints < 5000).length;
+      document.getElementById('platinum').textContent = platinum;
+      document.getElementById('gold').textContent = gold;
+      document.getElementById('silver').textContent = silver;
+    }
+    function getLoyaltyTier(points) {
+      if (points >= 10000) return { class: 'loyalty-platinum', label: 'Platinum' };
+      if (points >= 5000) return { class: 'loyalty-gold', label: 'Gold' };
+      if (points >= 1000) return { class: 'loyalty-silver', label: 'Silver' };
+      return { class: 'loyalty-bronze', label: 'Bronze' };
+    }
+    function renderCustomers(data = customers) {
+      const list = document.getElementById('customers-list');
+      if (data.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No customers found.</p>';
+        return;
+      }
+      list.innerHTML = data.map(c => {
+        const tier = getLoyaltyTier(c.loyaltyPoints || 0);
+        return `<div class="customer-card"><div class="avatar"><i class="fas fa-user"></i></div><div class="info"><div class="name">${c.name || 'Unknown'}</div><div class="email">${c.email || 'No email'}</div><div class="loyalty ${tier.class}"><i class="fas fa-crown"></i> ${tier.label} (${c.loyaltyPoints || 0} pts)</div></div></div>`;
+      }).join('');
+    }
+    init();
+  </script>
+</body>
+</html>
