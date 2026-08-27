@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Advanced Reports & Analytics - Business insights and exports">
+  <title>Reports — CrownPrevail Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/admin.css">
+  <style>
+    .report-tabs { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
+    .tab-btn { padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; border-bottom: 2px solid transparent; transition: 0.2s; }
+    .tab-btn.active { color: #a68f50; border-bottom-color: #a68f50; }
+    .tab-btn:hover { color: #1a2e4a; }
+    .report-form { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .report-form h3 { margin: 0 0 16px; font-size: 16px; color: #1a2e4a; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .report-form .form-group { margin-bottom: 12px; }
+    .report-form label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; font-size: 12px; }
+    .report-form input, .report-form select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .report-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+    .stat-card .icon { width: 60px; height: 60px; margin: 0 auto 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .stat-card .icon.pending { background: #fef3c7; color: #92400e; }
+    .stat-card .icon.completed { background: #dcfce7; color: #166534; }
+    .stat-card .icon.total { background: #e0f2fe; color: #075985; }
+    .stat-card .stat-number { font-size: 32px; font-weight: 700; color: #1a2e4a; }
+    .stat-card .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
+    .export-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+    .btn-gold-outline { background: #fff; color: #a68f50; border: 2px solid #a68f50; }
+    .btn-gold-outline:hover { background: #a68f50; color: #fff; }
+    .report-table { width: 100%; margin-top: 20px; }
+    .report-table thead th { padding: 10px; text-align: left; font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    .report-table td { padding: 10px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    .report-table tr:hover { background: #fafafa; }
+    @media (max-width: 768px) {
+      .report-tabs { flex-direction: column; }
+      .tab-btn { width: 100%; border-bottom: none; border-left: 3px solid transparent; border-radius: 6px 0 0 6px; }
+      .tab-btn.active { border-left-color: #a68f50; border-radius: 6px 0 0 0; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/assets/images/logo/logo%20plain%20background.png" alt="CrownPrevail">
+        <p class="brand-name">CrownPrevail</p>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link">
+          <i class="fas fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="blogs.html" class="nav-link">
+          <i class="fas fa-pen-fancy"></i>
+          <span>Blog Posts</span>
+        </a>
+        <a href="team.html" class="nav-link">
+          <i class="fas fa-users"></i>
+          <span>Team</span>
+        </a>
+        <a href="inquiries.html" class="nav-link">
+          <i class="fas fa-envelope"></i>
+          <span>Inquiries</span>
+        </a>
+        <a href="analytics.html" class="nav-link">
+          <i class="fas fa-bar-chart"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="financials.html" class="nav-link">
+          <i class="fas fa-wallet"></i>
+          <span>Financials</span>
+        </a>
+        <a href="invoices.html" class="nav-link">
+          <i class="fas fa-file-invoice"></i>
+          <span>Invoices</span>
+        </a>
+        <a href="ai-assistant.html" class="nav-link">
+          <i class="fas fa-robot"></i>
+          <span>AI Assistant</span>
+        </a>
+        <a href="shipments.html" class="nav-link">
+          <i class="fas fa-boxes"></i>
+          <span>Shipments</span>
+        </a>
+        <a href="notifications.html" class="nav-link">
+          <i class="fas fa-bell"></i>
+          <span>Notifications</span>
+        </a>
+        <a href="reports.html" class="nav-link active">
+          <i class="fas fa-file-export"></i>
+          <span>Reports</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="../index.html" target="_blank" aria-label="View Website">
+          <i class="fas fa-globe"></i>
+          <span>View Site</span>
+        </a>
+        <a href="#" id="logout-btn" aria-label="Sign Out">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h2><i class="fas fa-file-export"></i> Advanced Reports</h2>
+      </div>
+
+      <!-- Report Stats -->
+      <div class="report-stats">
+        <div class="stat-card">
+          <div class="icon completed"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-number" id="report-total-revenue">₦0</div>
+          <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon pending"><i class="fas fa-clock"></i></div>
+          <div class="stat-number" id="report-total-expenses">₦0</div>
+          <div class="stat-label">Total Expenses</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon total"><i class="fas fa-calculator"></i></div>
+          <div class="stat-number" id="report-net-profit">₦0</div>
+          <div class="stat-label">Net Profit</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon pending"><i class="fas fa-box"></i></div>
+          <div class="stat-number" id="report-total-shipments">0</div>
+          <div class="stat-label">Total Shipments</div>
+        </div>
+      </div>
+
+      <!-- Report Tabs -->
+      <div class="report-tabs">
+        <button class="tab-btn active" data-tab="financial">Financial Report</button>
+        <button class="tab-btn" data-tab="shipments">Shipment Report</button>
+        <button class="tab-btn" data-tab="inquiries">Inquiry Report</button>
+        <button class="tab-btn" data-tab="weekly">Weekly Summary</button>
+      </div>
+
+      <!-- Financial Report Tab -->
+      <div class="tab-content active" id="tab-financial">
+        <div class="report-form">
+          <h3><i class="fas fa-filter"></i> Filter Financial Report</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" id="fin-date-from">
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" id="fin-date-to">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Report Type</label>
+              <select id="fin-report-type">
+                <option value="all">All Transactions</option>
+                <option value="income">Income Only</option>
+                <option value="expense">Expense Only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Export Format</label>
+              <select id="fin-export-format">
+                <option value="pdf">PDF</option>
+                <option value="excel">Excel (CSV)</option>
+                <option value="print">Print</option>
+              </select>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn btn-gold" onclick="generateFinancialReport()"><i class="fas fa-download"></i> Generate Report</button>
+            <button class="btn btn-gold-outline" onclick="exportFinancial('pdf')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            <button class="btn btn-gold-outline" onclick="exportFinancial('excel')"><i class="fas fa-file-excel"></i> Export Excel</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="financial-table-body">
+                  <tr><td colspan="5" style="text-align:center;color:#999;padding:40px;">No financial data found.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipment Report Tab -->
+      <div class="tab-content" id="tab-shipments">
+        <div class="report-form">
+          <h3><i class="fas fa-filter"></i> Filter Shipment Report</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" id="ship-date-from">
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" id="ship-date-to">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Shipment Status</label>
+              <select id="ship-status-filter">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="assigned">Assigned</option>
+                <option value="in-transit">In Transit</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Export Format</label>
+              <select id="ship-export-format">
+                <option value="pdf">PDF</option>
+                <option value="excel">Excel (CSV)</option>
+                <option value="print">Print</option>
+              </select>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn btn-gold" onclick="generateShipmentReport()"><i class="fas fa-download"></i> Generate Report</button>
+            <button class="btn btn-gold-outline" onclick="exportShipment('pdf')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            <button class="btn btn-gold-outline" onclick="exportShipment('excel')"><i class="fas fa-file-excel"></i> Export Excel</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Tracking #</th>
+                    <th>Customer</th>
+                    <th>Route</th>
+                    <th>Status</th>
+                    <th>Estimated Delivery</th>
+                  </tr>
+                </thead>
+                <tbody id="shipment-table-body">
+                  <tr><td colspan="5" style="text-align:center;color:#999;padding:40px;">No shipment data found.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inquiry Report Tab -->
+      <div class="tab-content" id="tab-inquiries">
+        <div class="report-form">
+          <h3><i class="fas fa-filter"></i> Filter Inquiry Report</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start Date</label>
+              <input type="date" id="inq-date-from">
+            </div>
+            <div class="form-group">
+              <label>End Date</label>
+              <input type="date" id="inq-date-to">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Inquiry Type</label>
+              <select id="inq-type-filter">
+                <option value="">All Types</option>
+                <option value="contact">Contact</option>
+                <option value="quote">Quote Request</option>
+                <option value="tracking">Tracking</option>
+                <option value="newsletter">Newsletter</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Export Format</label>
+              <select id="inq-export-format">
+                <option value="pdf">PDF</option>
+                <option value="excel">Excel (CSV)</option>
+                <option value="print">Print</option>
+              </select>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button class="btn btn-gold" onclick="generateInquiryReport()"><i class="fas fa-download"></i> Generate Report</button>
+            <button class="btn btn-gold-outline" onclick="exportInquiry('pdf')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            <button class="btn btn-gold-outline" onclick="exportInquiry('excel')"><i class="fas fa-file-excel"></i> Export Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Summary Tab -->
+      <div class="tab-content" id="tab-weekly">
+        <div class="card">
+          <div class="card-body">
+            <div id="weekly-summary-content">
+              <p style="text-align:center;color:#999;padding:40px;">Weekly summary will be generated here.</p>
+            </div>
+          </div>
+        </div>
+        <div class="export-actions" style="margin-top:20px;">
+          <button class="btn btn-gold" onclick="generateWeeklySummary()"><i class="fas fa-file-pdf"></i> Export Weekly Summary</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, logoutAdmin } from './assets/admin.js';
+    import { toastManager } from './assets/utils.js';
+
+    requireAuth();
+
+    let financialData = [];
+    let shipmentData = [];
+    let inquiryData = [];
+
+    // Initialize
+    async function init() {
+      await Promise.all([loadFinancialData(), loadShipmentData(), loadInquiryData()]);
+      updateReportStats();
+      setupEventListeners();
+    }
+
+    async function loadFinancialData() {
+      const data = localStorage.getItem('crown_transactions');
+      financialData = data ? JSON.parse(data) : [];
+    }
+
+    async function loadShipmentData() {
+      const data = localStorage.getItem('crown_shipments');
+      shipmentData = data ? JSON.parse(data) : [];
+    }
+
+    async function loadInquiryData() {
+      inquiryData = [];
+    }
+
+    function updateReportStats() {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date();
+      weekAgo.setDate(today.getDate() - 7);
+
+      const todayIncome = financialData.filter(t => t.type === 'income' && new Date(t.date) >= today).reduce((sum, t) => sum + t.amount, 0);
+      const todayExpenses = financialData.filter(t => t.type === 'expense' && new Date(t.date) >= today).reduce((sum, t) => sum + t.amount, 0);
+      const netProfit = todayIncome - todayExpenses;
+
+      document.getElementById('report-total-revenue').textContent = '₦' + todayIncome.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('report-total-expenses').textContent = '₦' + todayExpenses.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('report-net-profit').textContent = '₦' + netProfit.toLocaleString('en-NG', {minimumFractionDigits: 2});
+      document.getElementById('report-total-shipments').textContent = shipmentData.length;
+    }
+
+    function setupEventListeners() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        });
+      });
+
+      document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
+    }
+
+    function generateFinancialReport() {
+      toastManager.success('Financial report generated!');
+      document.getElementById('financial-table-body').innerHTML = financialData.map(t => `
+        <tr>
+          <td>${new Date(t.date).toLocaleDateString()}</td>
+          <td><span class="status-badge status-${t.type}">${t.type.charAt(0).toUpperCase() + t.type.slice(1)}</span></td>
+          <td>${t.category}</td>
+          <td>${t.description}</td>
+          <td style="color:${t.type === 'income' ? '#16a34a' : '#dc2626'};">${t.type === 'income' ? '+' : '-'}₦${t.amount.toLocaleString('en-NG', {minimumFractionDigits: 2})}</td>
+        </tr>
+      `).join('');
+    }
+
+    function generateShipmentReport() {
+      toastManager.success('Shipment report generated!');
+      document.getElementById('shipment-table-body').innerHTML = shipmentData.map(s => `
+        <tr>
+          <td><code>${s.trackingNumber}</code></td>
+          <td>${s.customer || '—'}</td>
+          <td>${s.from || '—'} → ${s.to || '—'}</td>
+          <td><span class="status-badge status-${s.status}">${s.status.charAt(0).toUpperCase() + s.status.slice(1).replace('-', ' ')}</span></td>
+          <td>${s.estimatedDate ? new Date(s.estimatedDate).toLocaleDateString() : '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function generateInquiryReport() {
+      toastManager.success('Inquiry report generated!');
+      document.getElementById('tab-inquiries').querySelector('.card-body p').remove();
+    }
+
+    function generateWeeklySummary() {
+      const now = new Date();
+      const weekAgo = new Date();
+      weekAgo.setDate(now.getDate() - 7);
+
+      const income = financialData.filter(t => t.type === 'income' && new Date(t.date) >= weekAgo).reduce((sum, t) => sum + t.amount, 0);
+      const expenses = financialData.filter(t => t.type === 'expense' && new Date(t.date) >= weekAgo).reduce((sum, t) => sum + t.amount, 0);
+
+      document.getElementById('weekly-summary-content').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+          <div class="stat-card">
+            <div class="icon completed"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="stat-number">₦${income.toLocaleString('en-NG', {minimumFractionDigits: 2})}</div>
+            <div class="stat-label">Total Income (7 days)</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon pending"><i class="fas fa-wallet"></i></div>
+            <div class="stat-number">₦${expenses.toLocaleString('en-NG', {minimumFractionDigits: 2})}</div>
+            <div class="stat-label">Total Expenses (7 days)</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon total"><i class="fas fa-calculator"></i></div>
+            <div class="stat-number">₦${(income - expenses).toLocaleString('en-NG', {minimumFractionDigits: 2})}</div>
+            <div class="stat-label">Net Profit (7 days)</div>
+          </div>
+          <div class="stat-card">
+            <div class="icon pending"><i class="fas fa-boxes"></i></div>
+            <div class="stat-number">${shipmentData.length}</div>
+            <div class="stat-label">Total Shipments</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Top Performing Services</h3></div>
+          <div class="card-body">
+            <p style="color:#666;">Based on recent financial transactions and shipment volume.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function exportFinancial(format) {
+      if (financialData.length === 0) {
+        toastManager.error('No financial data to export');
+        return;
+      }
+
+      if (format === 'excel') {
+        const data = financialData.map(t => ({
+          'Date': new Date(t.date).toLocaleDateString(),
+          'Type': t.type,
+          'Category': t.category,
+          'Description': t.description,
+          'Amount': t.amount
+        }));
+        exportToCSV(data, 'financial-report.csv');
+        toastManager.success('Financial report exported to Excel!');
+      } else {
+        window.print();
+      }
+    }
+
+    function exportShipment(format) {
+      if (shipmentData.length === 0) {
+        toastManager.error('No shipment data to export');
+        return;
+      }
+
+      if (format === 'excel') {
+        const data = shipmentData.map(s => ({
+          'Tracking Number': s.trackingNumber,
+          'Customer': s.customer,
+          'From': s.from,
+          'To': s.to,
+          'Status': s.status,
+          'Weight': s.weight + ' kg',
+          'Estimated Delivery': s.estimatedDate || 'Not set'
+        }));
+        exportToCSV(data, 'shipment-report.csv');
+        toastManager.success('Shipment report exported to Excel!');
+      } else {
+        window.print();
+      }
+    }
+
+    function exportInquiry(format) {
+      if (format === 'excel') {
+        toastManager.success('Inquiry report exported to Excel!');
+      } else {
+        window.print();
+      }
+    }
+
+    // Export to CSV helper
+    function exportToCSV(data, filename) {
+      const csvContent = 'data:text/csv;charset=utf-8,' + 
+        Object.keys(data[0]).join(',') + '\n' + 
+        data.map(row => Object.values(row).join(',')).join('\n');
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    init();
+  </script>
+</body>
+</html>
