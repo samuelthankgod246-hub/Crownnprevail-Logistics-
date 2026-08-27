@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Email Notifications - Manage email communications">
+  <title>Email Notifications — CrownPrevail Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/admin.css">
+  <style>
+    .notification-tabs { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
+    .tab-btn { padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; border-bottom: 2px solid transparent; transition: 0.2s; }
+    .tab-btn.active { color: #a68f50; border-bottom-color: #a68f50; }
+    .tab-btn:hover { color: #1a2e4a; }
+    .template-form { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .template-form h3 { margin: 0 0 16px; font-size: 16px; color: #1a2e4a; }
+    .template-form .form-group { margin-bottom: 12px; }
+    .template-form label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; font-size: 12px; }
+    .template-form input, .template-form select, .template-form textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .template-form textarea { resize: vertical; min-height: 100px; }
+    .test-email-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+    .test-email-row:last-child { border-bottom: none; }
+    .btn-secondary { background: #f0f0f0; color: #333; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .queue-table { width: 100%; }
+    .queue-table thead th { padding: 10px; text-align: left; font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    .queue-table td { padding: 10px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    .queue-table tr:hover { background: #fafafa; }
+    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-sent { background: #dcfce7; color: #166534; }
+    .status-failed { background: #fee2e2; color: #991b1b; }
+    @media (max-width: 768px) {
+      .notification-tabs { flex-direction: column; }
+      .tab-btn { width: 100%; border-bottom: none; border-left: 3px solid transparent; border-radius: 6px 0 0 6px; }
+      .tab-btn.active { border-left-color: #a68f50; border-radius: 6px 0 0 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/assets/images/logo/logo%20plain%20background.png" alt="CrownPrevail">
+        <p class="brand-name">CrownPrevail</p>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-link">
+          <i class="fas fa-chart-line"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="blogs.html" class="nav-link">
+          <i class="fas fa-pen-fancy"></i>
+          <span>Blog Posts</span>
+        </a>
+        <a href="team.html" class="nav-link">
+          <i class="fas fa-users"></i>
+          <span>Team</span>
+        </a>
+        <a href="inquiries.html" class="nav-link">
+          <i class="fas fa-envelope"></i>
+          <span>Inquiries</span>
+        </a>
+        <a href="analytics.html" class="nav-link">
+          <i class="fas fa-bar-chart"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="financials.html" class="nav-link">
+          <i class="fas fa-wallet"></i>
+          <span>Financials</span>
+        </a>
+        <a href="invoices.html" class="nav-link">
+          <i class="fas fa-file-invoice"></i>
+          <span>Invoices</span>
+        </a>
+        <a href="ai-assistant.html" class="nav-link">
+          <i class="fas fa-robot"></i>
+          <span>AI Assistant</span>
+        </a>
+        <a href="shipments.html" class="nav-link">
+          <i class="fas fa-boxes"></i>
+          <span>Shipments</span>
+        </a>
+        <a href="notifications.html" class="nav-link active">
+          <i class="fas fa-bell"></i>
+          <span>Notifications</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="../index.html" target="_blank" aria-label="View Website">
+          <i class="fas fa-globe"></i>
+          <span>View Site</span>
+        </a>
+        <a href="#" id="logout-btn" aria-label="Sign Out">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h2><i class="fas fa-bell"></i> Email Notifications</h2>
+      </div>
+
+      <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+        <div class="stat-card"><div class="stat-icon" style="background: #fef3c7; color: #92400e;"><i class="fas fa-clock"></i></div><div class="stat-number" id="stat-pending">0</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background: #dcfce7; color: #166534;"><i class="fas fa-check"></i></div><div class="stat-number" id="stat-sent">0</div><div class="stat-label">Sent</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background: #fee2e2; color: #991b1b;"><i class="fas fa-times"></i></div><div class="stat-number" id="stat-failed">0</div><div class="stat-label">Failed</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background: #e0f2fe; color: #075985;"><i class="fas fa-envelope"></i></div><div class="stat-number" id="stat-total">0</div><div class="stat-label">Total</div></div>
+      </div>
+
+      <div class="notification-tabs">
+        <button class="tab-btn active" data-tab="templates">Templates</button>
+        <button class="tab-btn" data-tab="queue">Queue</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
+      </div>
+
+      <!-- Templates Tab -->
+      <div class="tab-content active" id="tab-templates">
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-file-alt"></i> Email Templates</h3>
+          </div>
+          <div class="card-body">
+            <div class="template-form">
+              <h3>Shipment Status Update</h3>
+              <div class="row-2">
+                <div class="form-group">
+                  <label>Subject</label>
+                  <input type="text" id="template-subject" value="Your Shipment {{tracking_number}} Status Update">
+                </div>
+                <div class="form-group">
+                  <label>Status</label>
+                  <select id="template-status">
+                    <option value="pending">Pending</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="in-transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Template</label>
+                <textarea id="template-body" rows="5">Hello {{customer_name}},
+
+Your shipment status has been updated to: {{status}}
+
+Tracking Number: {{tracking_number}}
+Route: {{route}}
+Estimated Delivery: {{estimated_date}}
+
+{{notes}}
+
+Thank you for choosing CrownPrevail Logistics!</textarea>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-gold" onclick="sendTestEmail('shipment')"><i class="fas fa-paper-plane"></i> Send Test Email</button>
+                <button class="btn btn-outline" onclick="saveTemplate('shipment')"><i class="fas fa-save"></i> Save Template</button>
+              </div>
+            </div>
+
+            <div class="template-form">
+              <h3>Quote Response</h3>
+              <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="quote-subject" value="Your Quote Request #{{quote_id}}">
+              </div>
+              <div class="form-group">
+                <label>Template</label>
+                <textarea id="quote-body" rows="4">Hello {{customer_name}},
+
+Thank you for your quote request. Our team has prepared a quote for:
+
+{{quote_details}}
+
+Please review and let us know if you'd like to proceed.
+
+Best regards,
+CrownPrevail Logistics</textarea>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-gold" onclick="sendTestEmail('quote')"><i class="fas fa-paper-plane"></i> Send Test Email</button>
+                <button class="btn btn-outline" onclick="saveTemplate('quote')"><i class="fas fa-save"></i> Save Template</button>
+              </div>
+            </div>
+
+            <div class="template-form">
+              <h3>Newsletter Subscription</h3>
+              <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="news-subject" value="Welcome to CrownPrevail Newsletter!">
+              </div>
+              <div class="form-group">
+                <label>Template</label>
+                <textarea id="news-body" rows="4">Welcome {{email}}!
+
+Thank you for subscribing to our newsletter. You'll receive regular updates about our services and special offers.
+
+Stay connected!
+CrownPrevail Logistics</textarea>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-gold" onclick="sendTestEmail('newsletter')"><i class="fas fa-paper-plane"></i> Send Test Email</button>
+                <button class="btn btn-outline" onclick="saveTemplate('newsletter')"><i class="fas fa-save"></i> Save Template</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Queue Tab -->
+      <div class="tab-content" id="tab-queue">
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-inbox"></i> Email Queue</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="queue-table">
+                <thead>
+                  <tr>
+                    <th>Recipient</th>
+                    <th>Subject</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="queue-body">
+                  <tr><td colspan="5" style="text-align:center;color:#999;padding:40px;">No emails in queue.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div class="tab-content" id="tab-settings">
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-cog"></i> Notification Settings</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;">
+                <input type="checkbox" id="email-enabled" checked>
+                <span>Enable Email Notifications</span>
+              </label>
+              <p style="color: #666; font-size: 12px; margin: 4px 0 12px;">When enabled, emails will be automatically sent for events.</p>
+            </div>
+
+            <div class="form-group">
+              <label>Default Sender Name</label>
+              <input type="text" id="sender-name" value="CrownPrevail Logistics">
+            </div>
+
+            <div class="form-group">
+              <label>Default Sender Email</label>
+              <input type="email" id="sender-email" value="info@crownprevail.com">
+            </div>
+
+            <div class="form-group">
+              <label>Test Recipient Email</label>
+              <input type="email" id="test-email" placeholder="admin@example.com">
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-gold" onclick="saveSettings()"><i class="fas fa-save"></i> Save Settings</button>
+              <button class="btn btn-outline" onclick="resetSettings()"><i class="fas fa-redo"></i> Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+          </div>
+          <div class="card-body">
+            <div class="test-email-row">
+              <span>Send Test Email</span>
+              <button class="btn btn-sm btn-secondary" onclick="sendTestEmail('notification')"><i class="fas fa-paper-plane"></i> Send Test</button>
+            </div>
+            <div class="test-email-row">
+              <span>Clear Failed Emails</span>
+              <button class="btn btn-sm btn-danger" onclick="clearFailed()"><i class="fas fa-trash"></i> Clear</button>
+            </div>
+            <div class="test-email-row">
+              <span>Send All Pending Emails</span>
+              <button class="btn btn-sm btn-gold" onclick="sendPending()"><i class="fas fa-bolt"></i> Send All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { requireAuth, logoutAdmin } from './assets/admin.js';
+    import { toastManager } from './assets/utils.js';
+
+    requireAuth();
+
+    let queue = [];
+
+    // Initialize
+    async function init() {
+      loadQueue();
+      loadSettings();
+      setupEventListeners();
+    }
+
+    function loadQueue() {
+      const stored = localStorage.getItem('crown_email_queue');
+      queue = stored ? JSON.parse(stored) : [];
+      updateStats();
+      renderQueue();
+    }
+
+    function updateStats() {
+      const counts = { pending: 0, sent: 0, failed: 0 };
+      queue.forEach(q => counts[q.status]++);
+      
+      document.getElementById('stat-pending').textContent = counts.pending;
+      document.getElementById('stat-sent').textContent = counts.sent;
+      document.getElementById('stat-failed').textContent = counts.failed;
+      document.getElementById('stat-total').textContent = queue.length;
+    }
+
+    function renderQueue() {
+      const tbody = document.getElementById('queue-body');
+      if (queue.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:40px;">No emails in queue.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = queue.map(q => `
+        <tr>
+          <td>${q.to}</td>
+          <td>${q.subject}</td>
+          <td><span class="status-badge status-${q.status}">${q.status.charAt(0).toUpperCase() + q.status.slice(1)}</span></td>
+          <td>${new Date(q.createdAt).toLocaleString()}</td>
+          <td>
+            ${q.status === 'pending' ? `<button onclick="resendEmail('${q.id}')" class="btn btn-sm btn-outline" title="Resend"><i class="fas fa-redo"></i></button>` : ''}
+            <button onclick="deleteEmail('${q.id}')" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function loadSettings() {
+      const settings = JSON.parse(localStorage.getItem('crown_email_settings') || '{}');
+      if (settings.emailEnabled !== undefined) document.getElementById('email-enabled').checked = settings.emailEnabled;
+      if (settings.senderName) document.getElementById('sender-name').value = settings.senderName;
+      if (settings.senderEmail) document.getElementById('sender-email').value = settings.senderEmail;
+      if (settings.testEmail) document.getElementById('test-email').value = settings.testEmail;
+    }
+
+    function setupEventListeners() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        });
+      });
+
+      document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
+    }
+
+    async function sendTestEmail(type) {
+      const recipient = document.getElementById('test-email').value || 'admin@example.com';
+      const settings = JSON.parse(localStorage.getItem('crown_email_settings') || '{}');
+      
+      const templates = {
+        shipment: {
+          subject: document.getElementById('template-subject').value.replace('{{tracking_number}}', 'CP-TEST123'),
+          body: document.getElementById('template-body').value
+            .replace('{{customer_name}}', 'Test Customer')
+            .replace('{{status}}', 'In Transit')
+            .replace('{{tracking_number}}', 'CP-TEST123')
+            .replace('{{route}}', 'Lagos → Abuja')
+            .replace('{{estimated_date}}', new Date().toLocaleDateString())
+            .replace('{{notes}}', 'Your package is on its way!')
+        },
+        quote: {
+          subject: document.getElementById('quote-subject').value.replace('{{quote_id}}', 'QT-2024-001'),
+          body: document.getElementById('quote-body').value.replace('{{customer_name}}', 'Test Customer').replace('{{quote_details}}', 'Shipping quote for 500kg cargo')
+        },
+        newsletter: {
+          subject: document.getElementById('news-subject').value,
+          body: document.getElementById('news-body').value.replace('{{email}}', recipient)
+        }
+      };
+
+      const template = templates[type];
+      if (!template) return;
+
+      const emailData = {
+        id: Date.now().toString(),
+        to: recipient,
+        from: settings.senderEmail || 'info@crownprevail.com',
+        fromName: settings.senderName || 'CrownPrevail Logistics',
+        subject: template.subject,
+        body: template.body,
+        status: 'pending',
+        type: type,
+        createdAt: new Date()
+      };
+
+      queue.push(emailData);
+      localStorage.setItem('crown_email_queue', JSON.stringify(queue));
+      
+      toastManager.success(`Test email sent to ${recipient}!`);
+      updateStats();
+      renderQueue();
+    }
+
+    function saveTemplate(type) {
+      toastManager.success('Template saved!');
+    }
+
+    function saveSettings() {
+      const settings = {
+        emailEnabled: document.getElementById('email-enabled').checked,
+        senderName: document.getElementById('sender-name').value,
+        senderEmail: document.getElementById('sender-email').value,
+        testEmail: document.getElementById('test-email').value
+      };
+      localStorage.setItem('crown_email_settings', JSON.stringify(settings));
+      toastManager.success('Settings saved!');
+    }
+
+    function resetSettings() {
+      localStorage.removeItem('crown_email_settings');
+      loadSettings();
+      toastManager.info('Settings reset');
+    }
+
+    window.resendEmail = function(id) {
+      const email = queue.find(e => e.id === id);
+      if (email) {
+        email.status = 'pending';
+        email.retryAt = new Date();
+        localStorage.setItem('crown_email_queue', JSON.stringify(queue));
+        toastManager.success('Email re-queued');
+        updateStats();
+        renderQueue();
+      }
+    };
+
+    window.deleteEmail = function(id) {
+      queue = queue.filter(e => e.id !== id);
+      localStorage.setItem('crown_email_queue', JSON.stringify(queue));
+      updateStats();
+      renderQueue();
+      toastManager.success('Email removed from queue');
+    };
+
+    window.clearFailed = function() {
+      if (confirm('Remove all failed emails from queue?')) {
+        queue = queue.filter(e => e.status !== 'failed');
+        localStorage.setItem('crown_email_queue', JSON.stringify(queue));
+        updateStats();
+        renderQueue();
+        toastManager.success('Failed emails cleared');
+      }
+    };
+
+    window.sendPending = function() {
+      const pending = queue.filter(e => e.status === 'pending');
+      if (pending.length === 0) {
+        toastManager.info('No pending emails to send');
+        return;
+      }
+
+      pending.forEach(e => e.status = 'sent');
+      localStorage.setItem('crown_email_queue', JSON.stringify(queue));
+      updateStats();
+      renderQueue();
+      toastManager.success(`Queued ${pending.length} emails for sending`);
+    };
+
+    init();
+  </script>
+</body>
+</html>
