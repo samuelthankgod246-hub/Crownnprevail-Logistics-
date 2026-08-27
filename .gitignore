@@ -3,3 +3,8 @@ node_modules
 *.log
 .DS_Store
 Thumbs.db
+
+# Environment files (contain sensitive credentials)
+.env
+.env.*
+!.env.example

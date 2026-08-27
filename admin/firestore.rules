@@ -1,0 +1,29 @@
+﻿rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      return isAuthenticated();
+    }
+    match /blog_posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /team_members/{memberId} {
+      allow read, write: if isAdmin();
+    }
+    match /contact_inquiries/{inquiryId} {
+      allow read: if isAdmin();
+      allow create: if true;
+    }
+    match /quote_requests/{quoteId} {
+      allow read, write: if isAdmin();
+    }
+    match /newsletter_subscriptions/{subId} {
+      allow read: if isAdmin();
+      allow create: if true;
+    }
+  }
+}

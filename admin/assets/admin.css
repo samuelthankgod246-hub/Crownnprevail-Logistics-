@@ -143,6 +143,21 @@ a { text-decoration: none; color: inherit; }
 .alert.show { display: block; animation: slideInDown 0.3s ease-out; }
 @keyframes slideInDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+/* ── Admin Layout ────────────────────────────── */
+.admin-layout { 
+  display: block;
+  min-height: 100vh; 
+}
+
+/* ── Main Content ────────────────────────────── */
+.main-content {
+  margin-left: 260px;
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(180deg, #f0f2f5 0%, #e8ebf0 100%);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* ── Sidebar Navigation (Enhanced) ──────────── */
 .sidebar { 
   width: 260px; 

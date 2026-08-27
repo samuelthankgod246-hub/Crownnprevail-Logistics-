@@ -1,20 +1,33 @@
 // Firebase Configuration (Environment-aware)
-// For production, these should come from backend/environment variables
-// This is a placeholder - in production, fetch from secure backend endpoint
+// Environment variables are injected at build time
+// For local development, use .env file (see .env.example)
 
-export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAXpkiAZpVsmQ4CeyfR_cn8cmOzvklQqXI",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "crownprevail-logistics.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "crownprevail-logistics",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "crownprevail-logistics.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1026209370719",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1026209370719:web:f3ce4b1d0d412d21d401ea",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-1X28HRDEQX"
+// Check if we're in a build environment with Vite
+// Vite exposes env variables prefixed with VITE_ (not VITE_)
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Note: In production, implement backend endpoint to fetch config securely
-// export async function getSecureFirebaseConfig() {
-//   const response = await fetch('/api/config/firebase');
-//   if (!response.ok) throw new Error('Failed to fetch Firebase config');
-//   return response.json();
-// }
+// Validate required config
+const requiredKeys = ['apiKey', 'authDomain', 'projectId'];
+const missingKeys = requiredKeys.filter(key => !firebaseConfig[key]);
+
+if (missingKeys.length > 0) {
+  console.error('Firebase configuration is incomplete. Please create a .env file with the following keys:');
+  missingKeys.forEach(key => console.error(`  - VITE_${key.toUpperCase()}`));
+  console.error('See .env.example for a template.');
+}
+
+// OpenRouter API Configuration
+const openRouterConfig = {
+  apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || null
+};
+
+// Export configs
+export { firebaseConfig, openRouterConfig };
