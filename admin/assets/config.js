@@ -29,5 +29,11 @@ const openRouterConfig = {
   apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || null
 };
 
+// Gemini API Configuration
+const geminiConfig = {
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY || null,
+  model: 'gemini-1.5-flash'
+};
+
 // Export configs
-export { firebaseConfig, openRouterConfig };
+export { firebaseConfig, openRouterConfig, geminiConfig };

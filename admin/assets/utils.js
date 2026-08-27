@@ -395,3 +395,152 @@ export function exportToCSV(data, filename = 'export.csv') {
   link.click();
   toastManager.success('Data exported successfully');
 }
+// ── Export utilities ────────────────────────────────────
+export function exportToCSV(data, filename = 'export.csv') {
+  if (!data || data.length === 0) {
+    toastManager.error('No data to export');
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const csv = [
+    headers.join(','),
+    ...data.map(row =>
+      headers.map(header => {
+        let value = row[header];
+        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+          value = `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      }).join(',')
+    )
+  ].join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  toastManager.success('Data exported successfully');
+}
+
+// ── AI API Fallback Handler ─────────────────────────────
+// Tries OpenRouter first, falls back to Gemini if OpenRouter fails
+export class AIApiHandler {
+  constructor() {
+    this.openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY || null;
+    this.geminiKey = import.meta.env.VITE_GEMINI_API_KEY || null;
+    this.openRouterModel = 'meta-llama/llama-3-8b-instruct:free';
+    this.geminiModel = 'gemini-1.5-flash';
+  }
+
+  async generateResponse(prompt, conversationHistory = []) {
+    const systemPrompt = `You are an AI logistics assistant for CrownPrevail Logistics company in Nigeria. You help with:
+- Financial analysis (income, expenses, profit/loss tracking)
+- Invoice generation and management
+- Shipment tracking and optimization
+- Performance analytics and forecasting
+- Business recommendations and insights
+- Report generation
+Be concise, professional, and data-driven. Provide actionable insights. Use Nigerian Naira (₦) for currency.`;
+
+    // Try OpenRouter first if key is available
+    if (this.openRouterKey) {
+      try {
+        const result = await this.callOpenRouter(prompt, conversationHistory, systemPrompt);
+        return { success: true, response: result, provider: 'OpenRouter' };
+      } catch (err) {
+        console.warn('OpenRouter failed, trying Gemini:', err.message);
+      }
+    }
+
+    // Fallback to Gemini if OpenRouter fails or no key
+    if (this.geminiKey) {
+      try {
+        const result = await this.callGemini(prompt, conversationHistory, systemPrompt);
+        return { success: true, response: result, provider: 'Gemini' };
+      } catch (err) {
+        console.error('Gemini failed:', err.message);
+      }
+    }
+
+    // No API keys available
+    return { 
+      success: false, 
+      error: 'No API keys configured. Please add VITE_OPENROUTER_API_KEY or VITE_GEMINI_API_KEY to .env file.' 
+    };
+  }
+
+  async callOpenRouter(prompt, conversationHistory, systemPrompt) {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory,
+      { role: 'user', content: prompt }
+    ];
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.openRouterKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: this.openRouterModel,
+        messages: messages,
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.choices && data.choices[0]?.message?.content) {
+      return data.choices[0].message.content;
+    }
+    throw new Error('Invalid response from OpenRouter');
+  }
+
+  async callGemini(prompt, conversationHistory, systemPrompt) {
+    // Build context from conversation history
+    let context = `${systemPrompt}\n\nPrevious conversation:\n`;
+    conversationHistory.forEach(msg => {
+      context += `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}\n`;
+    });
+
+    const messages = [
+      { role: 'user', content: context },
+      { role: 'user', content: `New request: ${prompt}` }
+    ];
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.geminiModel}:generateContent?key=${this.geminiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: context + '\n\n' + prompt }]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text;
+    }
+    throw new Error('Invalid response from Gemini');
+  }
+
+  hasAvailableKey() {
+    return !!this.openRouterKey || !!this.geminiKey;
+  }
+}
+
+export const aiApiHandler = new AIApiHandler();
