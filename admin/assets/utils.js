@@ -395,34 +395,6 @@ export function exportToCSV(data, filename = 'export.csv') {
   link.click();
   toastManager.success('Data exported successfully');
 }
-// ── Export utilities ────────────────────────────────────
-export function exportToCSV(data, filename = 'export.csv') {
-  if (!data || data.length === 0) {
-    toastManager.error('No data to export');
-    return;
-  }
-
-  const headers = Object.keys(data[0]);
-  const csv = [
-    headers.join(','),
-    ...data.map(row =>
-      headers.map(header => {
-        let value = row[header];
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-          value = `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      }).join(',')
-    )
-  ].join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-  toastManager.success('Data exported successfully');
-}
 
 // ── AI API Fallback Handler ─────────────────────────────
 // Tries OpenRouter first, falls back to Gemini if OpenRouter fails
@@ -505,30 +477,27 @@ Be concise, professional, and data-driven. Provide actionable insights. Use Nige
 
   async callGemini(prompt, conversationHistory, systemPrompt) {
     // Build context from conversation history
-    let context = `${systemPrompt}\n\nPrevious conversation:\n`;
+    let context = `${systemPrompt}\n\n`;
     conversationHistory.forEach(msg => {
       context += `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}\n`;
     });
+    context += `User: ${prompt}`;
 
-    const messages = [
-      { role: 'user', content: context },
-      { role: 'user', content: `New request: ${prompt}` }
-    ];
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.geminiModel}:generateContent?key=${this.geminiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.geminiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: context + '\n\n' + prompt }]
+          parts: [{ text: context }]
         }]
       })
     });
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(`Gemini API error: ${errorData.error?.message || response.status}`);
     }
 
     const data = await response.json();
