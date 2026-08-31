@@ -153,7 +153,7 @@
   </div>
 
   <script type="module">
-    import { initAdmin, logoutAdmin } from './assets/admin.js';
+    import { requireAuth, logoutAdmin } from './assets/admin.js';
     import { ToastManager, aiApiHandler } from './assets/utils.js';
     import { geminiConfig } from './assets/config.js';
 
@@ -162,7 +162,7 @@
 
     // Initialize
     async function init() {
-      await initAdmin();
+      requireAuth();
       checkApiKeyStatus();
       setupEventListeners();
       loadConversationHistory();
