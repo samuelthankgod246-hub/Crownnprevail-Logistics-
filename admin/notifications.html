@@ -487,6 +487,11 @@ CrownPrevail Logistics</textarea>
       toastManager.success(`Queued ${pending.length} emails for sending`);
     };
 
+    window.sendTestEmail = sendTestEmail;
+    window.saveTemplate = saveTemplate;
+    window.saveSettings = saveSettings;
+    window.resetSettings = resetSettings;
+
     init();
   </script>
 </body>

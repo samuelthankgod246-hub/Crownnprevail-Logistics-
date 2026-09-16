@@ -329,7 +329,7 @@
   </div>
 
   <script type="module">
-    import { requireAuth, logoutAdmin } from './assets/admin.js';
+    import { requireAuth, logoutAdmin, getCollection } from './assets/admin.js';
     import { toastManager } from './assets/utils.js';
 
     requireAuth();
@@ -351,8 +351,7 @@
     }
 
     async function loadShipmentData() {
-      const data = localStorage.getItem('crown_shipments');
-      shipmentData = data ? JSON.parse(data) : [];
+      shipmentData = await getCollection('shipments', 'createdAt', 'desc');
     }
 
     async function loadInquiryData() {
@@ -525,6 +524,14 @@
       link.click();
       document.body.removeChild(link);
     }
+
+    window.generateFinancialReport = generateFinancialReport;
+    window.exportFinancial = exportFinancial;
+    window.generateShipmentReport = generateShipmentReport;
+    window.exportShipment = exportShipment;
+    window.generateInquiryReport = generateInquiryReport;
+    window.exportInquiry = exportInquiry;
+    window.generateWeeklySummary = generateWeeklySummary;
 
     init();
   </script>

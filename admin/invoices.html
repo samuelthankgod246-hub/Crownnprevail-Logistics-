@@ -288,7 +288,7 @@
   </div>
 
   <script type="module">
-    import { initAdmin, logoutAdmin } from './assets/admin.js';
+    import { requireAuth, logoutAdmin } from './assets/admin.js';
     import { ToastManager } from './assets/utils.js';
 
     const toastManager = new ToastManager();
@@ -296,7 +296,7 @@
 
     // Initialize
     async function init() {
-      await initAdmin();
+      requireAuth();
       setDefaultDates();
       generateInvoiceNumber();
       setupEventListeners();
@@ -541,7 +541,7 @@
         </head>
         <body>
           ${html}
-          <script>window.print();</script>
+          <script>window.print();<\/script>
         </body>
         </html>
       `);

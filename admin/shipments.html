@@ -483,7 +483,7 @@
     }
 
     function setupEventListeners() {
-      document.getElementById('add-shipment-btn').addEventListener('click', () => {
+      document.querySelector('.add-shipment-btn').addEventListener('click', () => {
         editId = null;
         document.getElementById('modal-title').textContent = 'Add New Shipment';
         document.getElementById('shipment-form').reset();

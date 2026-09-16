@@ -61,6 +61,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`📍 Inquiries: http://localhost:${PORT}/admin/inquiries.html`);
   console.log(`📍 Analytics: http://localhost:${PORT}/admin/analytics.html`);
   console.log(`📍 Profile: http://localhost:${PORT}/admin/profile.html`);
+  console.log(`📍 AI Assistant: http://localhost:${PORT}/admin/ai-assistant.html`);
   console.log(`\n⏸  Press Ctrl+C to stop server\n`);
 });
 

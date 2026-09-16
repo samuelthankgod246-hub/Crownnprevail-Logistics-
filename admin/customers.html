@@ -58,12 +58,20 @@
     </main>
   </div>
   <script type="module">
-    import { requireAuth, logoutAdmin } from './assets/admin.js';
+    import { requireAuth, logoutAdmin, getCollection } from './assets/admin.js';
     import { toastManager } from './assets/utils.js';
     requireAuth();
     let customers = [];
     async function init() {
-      customers = JSON.parse(localStorage.getItem('crown_customers') || '[]');
+      const [inquiries, quotes, shipments] = await Promise.all([
+        getCollection('contact_inquiries', 'createdAt', 'desc'),
+        getCollection('quote_requests', 'createdAt', 'desc'),
+        getCollection('shipments', 'createdAt', 'desc')
+      ]);
+      const seen = new Set();
+      customers = [...inquiries, ...quotes, ...shipments]
+        .filter(c => c.email && !seen.has(c.email.toLowerCase()) && seen.add(c.email.toLowerCase()))
+        .map(c => ({ name: c.name || c.customer || 'Unknown', email: c.email, loyaltyPoints: 0 }));
       updateStats();
       renderCustomers();
       document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
