@@ -188,9 +188,9 @@
   <script type="module">
     import { requireAuth, logoutAdmin, formatDate } from './assets/admin.js';
     import { toastManager, FormValidator, validators } from './assets/utils.js';
-    import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    requireAuth();
+    await requireAuth();
     const auth = getAuth();
 
     // Display user email

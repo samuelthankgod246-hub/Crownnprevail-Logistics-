@@ -75,7 +75,7 @@
     import { requireAuth, getCollection, formatDate, deleteDocument, logoutAdmin } from './assets/admin.js';
     import { toastManager } from './assets/utils.js';
     
-    requireAuth();
+    await requireAuth();
 
     document.getElementById('logout-link').addEventListener('click', (e) => {
       e.preventDefault();

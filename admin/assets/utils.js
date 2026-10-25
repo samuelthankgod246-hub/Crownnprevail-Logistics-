@@ -396,14 +396,86 @@ export function exportToCSV(data, filename = 'export.csv') {
   toastManager.success('Data exported successfully');
 }
 
+// ── Markdown Renderer (safe, minimal) ───────────────────
+// Escapes HTML first, then converts a practical markdown subset:
+// headings, bold/italic, inline code, fenced code blocks, ul/ol lists,
+// and http(s)-only markdown links. Anything else renders as plain text.
+export function renderMarkdown(text) {
+  if (!text) return '';
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  // Protect fenced code blocks with placeholders
+  const codeBlocks = [];
+  let src = String(text).replace(/```([\w-]*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+    codeBlocks.push(code);
+    return `\u0000CODE${codeBlocks.length - 1}\u0000`;
+  });
+
+  src = esc(src);
+
+  const inline = (s) => s
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*\n])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  const lines = src.split(/\r?\n/);
+  let html = '';
+  let listType = null; // 'ul' | 'ol'
+  const closeList = () => { if (listType) { html += `</${listType}>`; listType = null; } };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const codeMatch = line.trim().match(/^\u0000CODE(\d+)\u0000$/);
+    if (codeMatch) {
+      closeList();
+      html += `<pre class="md-pre"><code>${esc(codeBlocks[+codeMatch[1]].replace(/\n$/, ''))}</code></pre>`;
+      continue;
+    }
+    if (!line.trim()) { closeList(); continue; }
+
+    let m;
+    if ((m = line.match(/^(#{1,4})\s+(.*)$/))) {
+      closeList();
+      html += `<div class="md-h">${inline(m[2])}</div>`;
+    } else if ((m = line.match(/^[-*\u2022]\s+(.*)$/))) {
+      if (listType !== 'ul') { closeList(); html += '<ul class="md-list">'; listType = 'ul'; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else if ((m = line.match(/^\d+[.)]\s+(.*)$/))) {
+      if (listType !== 'ol') { closeList(); html += '<ol class="md-list">'; listType = 'ol'; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else {
+      closeList();
+      html += `<p class="md-p">${inline(line)}</p>`;
+    }
+  }
+  closeList();
+  return html;
+}
+
 // ── AI API Fallback Handler ─────────────────────────────
 // Tries OpenRouter first, falls back to Gemini if OpenRouter fails
 export class AIApiHandler {
   constructor() {
-    this.openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY || null;
-    this.geminiKey = import.meta.env.VITE_GEMINI_API_KEY || null;
-    this.openRouterModel = 'meta-llama/llama-3-8b-instruct:free';
-    this.geminiModel = 'gemini-1.5-flash';
+    // Safe runtime detection for environment variables. When files are served
+    // directly (no bundler), `import.meta.env` is undefined in the browser.
+    // Fall back to `window.__APP_CONFIG__` or `localStorage` if available so
+    // the AI features work in preview mode.
+    const importEnv = (import.meta && import.meta.env) ? import.meta.env : null;
+    const windowConfig = (typeof window !== 'undefined' && window.__APP_CONFIG__) ? window.__APP_CONFIG__ : null;
+
+    this.openRouterKey = (importEnv && importEnv.VITE_OPENROUTER_API_KEY) ||
+                         (windowConfig && windowConfig.VITE_OPENROUTER_API_KEY) ||
+                         (typeof localStorage !== 'undefined' ? localStorage.getItem('openrouter_api_key') : null) ||
+                         null;
+
+    this.geminiKey = (importEnv && importEnv.VITE_GEMINI_API_KEY) ||
+                     (windowConfig && windowConfig.VITE_GEMINI_API_KEY) ||
+                     (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') : null) ||
+                     null;
+
+    this.openRouterModel = 'poolside/laguna-s-2.1:free';
+    this.geminiModel = 'gemini-3.8-flash';
   }
 
   async generateResponse(prompt, conversationHistory = []) {
@@ -414,7 +486,14 @@ export class AIApiHandler {
 - Performance analytics and forecasting
 - Business recommendations and insights
 - Report generation
-Be concise, professional, and data-driven. Provide actionable insights. Use Nigerian Naira (₦) for currency.`;
+Be concise, professional, and data-driven. Provide actionable insights. Use Nigerian Naira (₦) for currency.
+
+FORMAT RULES (important):
+- Structure every answer: begin with a short **Bold heading**, then bullet lists (- item) or numbered steps.
+- Bold key figures like ₦ amounts, percentages, and counts.
+- Keep paragraphs to 1-2 sentences max; never write walls of text.
+- Use markdown tables only when comparing 3+ items across attributes.
+- Never output raw HTML. Default to 180 words or fewer unless the user asks for detail.`;
 
     // Try OpenRouter first if key is available
     if (this.openRouterKey) {
@@ -450,29 +529,37 @@ Be concise, professional, and data-driven. Provide actionable insights. Use Nige
       { role: 'user', content: prompt }
     ];
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.openRouterKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: this.openRouterModel,
-        messages: messages,
-        max_tokens: 500,
-        temperature: 0.7
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status}`);
+    // Rotate through known-good free models — free tiers go down often
+    const models = [this.openRouterModel, 'poolside/laguna-xs-2.1:free', 'nvidia/nemotron-3.5-super-vl:free']
+      .filter((m, i, a) => a.indexOf(m) === i);
+    let lastErr = null;
+    for (const model of models) {
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          signal: AbortSignal.timeout(45000),
+          headers: {
+            'Authorization': `Bearer ${this.openRouterKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: messages,
+            max_tokens: 500,
+            temperature: 0.7
+          })
+        });
+        if (!response.ok) throw new Error(`OpenRouter API error: ${response.status}`);
+        const data = await response.json();
+        if (data.choices && data.choices[0]?.message?.content) {
+          return data.choices[0].message.content;
+        }
+        throw new Error('Invalid response from OpenRouter');
+      } catch (err) {
+        lastErr = err;
+      }
     }
-
-    const data = await response.json();
-    if (data.choices && data.choices[0]?.message?.content) {
-      return data.choices[0].message.content;
-    }
-    throw new Error('Invalid response from OpenRouter');
+    throw lastErr || new Error('Invalid response from OpenRouter');
   }
 
   async callGemini(prompt, conversationHistory, systemPrompt) {
@@ -483,28 +570,37 @@ Be concise, professional, and data-driven. Provide actionable insights. Use Nige
     });
     context += `User: ${prompt}`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.geminiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: context }]
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Gemini API error: ${errorData.error?.message || response.status}`);
+    // Specific model first, then the always-available latest alias
+    const models = [this.geminiModel, 'gemini-flash-latest'].filter((m, i, a) => a.indexOf(m) === i);
+    let lastErr = null;
+    for (const model of models) {
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.geminiKey}`, {
+          method: 'POST',
+          signal: AbortSignal.timeout(20000),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: context }]
+            }]
+          })
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Gemini API error: ${errorData.error?.message || response.status}`);
+        }
+        const data = await response.json();
+        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+          return data.candidates[0].content.parts[0].text;
+        }
+        throw new Error('Invalid response from Gemini');
+      } catch (err) {
+        lastErr = err;
+      }
     }
-
-    const data = await response.json();
-    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-      return data.candidates[0].content.parts[0].text;
-    }
-    throw new Error('Invalid response from Gemini');
+    throw lastErr || new Error('Invalid response from Gemini');
   }
 
   hasAvailableKey() {

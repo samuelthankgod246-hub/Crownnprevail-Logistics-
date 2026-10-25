@@ -8,3 +8,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Build/upload artifacts
+cpanel-upload.zip
+assets-images.zip

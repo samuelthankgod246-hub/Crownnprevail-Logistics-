@@ -301,23 +301,49 @@ CrownPrevail Logistics</textarea>
   </div>
 
   <script type="module">
-    import { requireAuth, logoutAdmin } from './assets/admin.js';
-    import { toastManager } from './assets/utils.js';
-
-    requireAuth();
+    import { requireAuth, logoutAdmin, getCollection, addDocument, updateDocument, deleteDocument, getDocument, setDocument } from './assets/admin.js';
+    import { toastManager, sanitizeHtml } from './assets/utils.js';
 
     let queue = [];
+    let settings = {};
 
     // Initialize
     async function init() {
-      loadQueue();
-      loadSettings();
+      await requireAuth();
+      await migrateLocalData();
+      await loadQueue();
+      await loadSettings();
       setupEventListeners();
     }
 
-    function loadQueue() {
-      const stored = localStorage.getItem('crown_email_queue');
-      queue = stored ? JSON.parse(stored) : [];
+    // One-time migration of legacy localStorage data into Firestore
+    async function migrateLocalData() {
+      const storedQueue = localStorage.getItem('crown_email_queue');
+      if (storedQueue) {
+        try {
+          const legacy = JSON.parse(storedQueue);
+          for (const q of legacy) {
+            await addDocument('email_queue', {
+              to: q.to || '', from: q.from || '', fromName: q.fromName || '',
+              subject: q.subject || '', body: q.body || '',
+              status: q.status || 'pending', type: q.type || 'shipment',
+              queuedAt: q.createdAt ? new Date(q.createdAt).toISOString() : new Date().toISOString()
+            });
+          }
+          localStorage.removeItem('crown_email_queue');
+        } catch (err) { console.error('Queue migration failed:', err); }
+      }
+      const storedSettings = localStorage.getItem('crown_email_settings');
+      if (storedSettings) {
+        try {
+          await setDocument('app_settings', 'notifications', JSON.parse(storedSettings));
+          localStorage.removeItem('crown_email_settings');
+        } catch (err) { console.error('Settings migration failed:', err); }
+      }
+    }
+
+    async function loadQueue() {
+      queue = await getCollection('email_queue', 'queuedAt', 'desc');
       updateStats();
       renderQueue();
     }
@@ -341,10 +367,10 @@ CrownPrevail Logistics</textarea>
 
       tbody.innerHTML = queue.map(q => `
         <tr>
-          <td>${q.to}</td>
-          <td>${q.subject}</td>
-          <td><span class="status-badge status-${q.status}">${q.status.charAt(0).toUpperCase() + q.status.slice(1)}</span></td>
-          <td>${new Date(q.createdAt).toLocaleString()}</td>
+          <td>${sanitizeHtml(q.to || '')}</td>
+          <td>${sanitizeHtml(q.subject || '')}</td>
+          <td><span class="status-badge status-${q.status}">${(q.status || 'pending').charAt(0).toUpperCase() + (q.status || 'pending').slice(1)}</span></td>
+          <td>${q.queuedAt ? new Date(q.queuedAt).toLocaleString() : '-'}</td>
           <td>
             ${q.status === 'pending' ? `<button onclick="resendEmail('${q.id}')" class="btn btn-sm btn-outline" title="Resend"><i class="fas fa-redo"></i></button>` : ''}
             <button onclick="deleteEmail('${q.id}')" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
@@ -353,12 +379,20 @@ CrownPrevail Logistics</textarea>
       `).join('');
     }
 
-    function loadSettings() {
-      const settings = JSON.parse(localStorage.getItem('crown_email_settings') || '{}');
-      if (settings.emailEnabled !== undefined) document.getElementById('email-enabled').checked = settings.emailEnabled;
-      if (settings.senderName) document.getElementById('sender-name').value = settings.senderName;
-      if (settings.senderEmail) document.getElementById('sender-email').value = settings.senderEmail;
-      if (settings.testEmail) document.getElementById('test-email').value = settings.testEmail;
+    async function loadSettings() {
+      settings = (await getDocument('app_settings', 'notifications')) || {};
+      const el = id => document.getElementById(id);
+      if (settings.emailEnabled !== undefined) el('email-enabled').checked = settings.emailEnabled;
+      if (settings.senderName) el('sender-name').value = settings.senderName;
+      if (settings.senderEmail) el('sender-email').value = settings.senderEmail;
+      if (settings.testEmail) el('test-email').value = settings.testEmail;
+      const t = settings.templates || {};
+      if (t.shipmentSubject) el('template-subject').value = t.shipmentSubject;
+      if (t.shipmentBody) el('template-body').value = t.shipmentBody;
+      if (t.quoteSubject) el('quote-subject').value = t.quoteSubject;
+      if (t.quoteBody) el('quote-body').value = t.quoteBody;
+      if (t.newsSubject) el('news-subject').value = t.newsSubject;
+      if (t.newsBody) el('news-body').value = t.newsBody;
     }
 
     function setupEventListeners() {
@@ -376,7 +410,6 @@ CrownPrevail Logistics</textarea>
 
     async function sendTestEmail(type) {
       const recipient = document.getElementById('test-email').value || 'admin@example.com';
-      const settings = JSON.parse(localStorage.getItem('crown_email_settings') || '{}');
       
       const templates = {
         shipment: {
@@ -403,7 +436,6 @@ CrownPrevail Logistics</textarea>
       if (!template) return;
 
       const emailData = {
-        id: Date.now().toString(),
         to: recipient,
         from: settings.senderEmail || 'info@crownprevail.com',
         fromName: settings.senderName || 'CrownPrevail Logistics',
@@ -411,80 +443,87 @@ CrownPrevail Logistics</textarea>
         body: template.body,
         status: 'pending',
         type: type,
-        createdAt: new Date()
+        queuedAt: new Date().toISOString()
       };
 
-      queue.push(emailData);
-      localStorage.setItem('crown_email_queue', JSON.stringify(queue));
-      
-      toastManager.success(`Test email sent to ${recipient}!`);
-      updateStats();
-      renderQueue();
+      const result = await addDocument('email_queue', emailData);
+      if (result.success) {
+        toastManager.success(`Test email queued for ${recipient}`);
+        await loadQueue();
+      }
     }
 
-    function saveTemplate(type) {
-      toastManager.success('Template saved!');
+    async function saveTemplate(type) {
+      const el = id => document.getElementById(id).value;
+      const templates = settings.templates || {};
+      if (type === 'shipment') { templates.shipmentSubject = el('template-subject'); templates.shipmentBody = el('template-body'); }
+      if (type === 'quote') { templates.quoteSubject = el('quote-subject'); templates.quoteBody = el('quote-body'); }
+      if (type === 'newsletter') { templates.newsSubject = el('news-subject'); templates.newsBody = el('news-body'); }
+      settings.templates = templates;
+      const result = await setDocument('app_settings', 'notifications', { templates });
+      if (result.success) toastManager.success('Template saved!');
     }
 
-    function saveSettings() {
-      const settings = {
-        emailEnabled: document.getElementById('email-enabled').checked,
-        senderName: document.getElementById('sender-name').value,
-        senderEmail: document.getElementById('sender-email').value,
-        testEmail: document.getElementById('test-email').value
+    async function saveSettings() {
+      const el = id => document.getElementById(id);
+      settings = {
+        emailEnabled: el('email-enabled').checked,
+        senderName: el('sender-name').value,
+        senderEmail: el('sender-email').value,
+        testEmail: el('test-email').value,
+        templates: settings.templates || {}
       };
-      localStorage.setItem('crown_email_settings', JSON.stringify(settings));
-      toastManager.success('Settings saved!');
+      const result = await setDocument('app_settings', 'notifications', settings);
+      if (result.success) toastManager.success('Settings saved!');
     }
 
-    function resetSettings() {
-      localStorage.removeItem('crown_email_settings');
-      loadSettings();
+    async function resetSettings() {
+      await setDocument('app_settings', 'notifications', { emailEnabled: false, senderName: '', senderEmail: '', testEmail: '' });
+      settings = {};
+      await loadSettings();
       toastManager.info('Settings reset');
     }
 
-    window.resendEmail = function(id) {
+    window.resendEmail = async function(id) {
       const email = queue.find(e => e.id === id);
-      if (email) {
+      if (!email) return;
+      const result = await updateDocument('email_queue', id, { status: 'pending', retryAt: new Date().toISOString() });
+      if (result.success) {
         email.status = 'pending';
-        email.retryAt = new Date();
-        localStorage.setItem('crown_email_queue', JSON.stringify(queue));
         toastManager.success('Email re-queued');
         updateStats();
         renderQueue();
       }
     };
 
-    window.deleteEmail = function(id) {
-      queue = queue.filter(e => e.id !== id);
-      localStorage.setItem('crown_email_queue', JSON.stringify(queue));
-      updateStats();
-      renderQueue();
-      toastManager.success('Email removed from queue');
-    };
-
-    window.clearFailed = function() {
-      if (confirm('Remove all failed emails from queue?')) {
-        queue = queue.filter(e => e.status !== 'failed');
-        localStorage.setItem('crown_email_queue', JSON.stringify(queue));
+    window.deleteEmail = async function(id) {
+      const result = await deleteDocument('email_queue', id);
+      if (result.success) {
+        queue = queue.filter(e => e.id !== id);
         updateStats();
         renderQueue();
-        toastManager.success('Failed emails cleared');
       }
     };
 
-    window.sendPending = function() {
+    window.clearFailed = async function() {
+      if (!confirm('Remove all failed emails from queue?')) return;
+      const failed = queue.filter(e => e.status === 'failed');
+      for (const e of failed) await deleteDocument('email_queue', e.id);
+      await loadQueue();
+      toastManager.success('Failed emails cleared');
+    };
+
+    // NOTE: actual SMTP delivery requires the notification mailer Cloud
+    // Function (functions/index.js). Here we only flip queue status.
+    window.sendPending = async function() {
       const pending = queue.filter(e => e.status === 'pending');
       if (pending.length === 0) {
         toastManager.info('No pending emails to send');
         return;
       }
-
-      pending.forEach(e => e.status = 'sent');
-      localStorage.setItem('crown_email_queue', JSON.stringify(queue));
-      updateStats();
-      renderQueue();
-      toastManager.success(`Queued ${pending.length} emails for sending`);
+      for (const e of pending) await updateDocument('email_queue', e.id, { status: 'sent', sentAt: new Date().toISOString() });
+      await loadQueue();
+      toastManager.success(`Marked ${pending.length} emails as sent`);
     };
 
     window.sendTestEmail = sendTestEmail;

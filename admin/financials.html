@@ -233,21 +233,41 @@
   </div>
 
   <script type="module">
-    import { requireAuth, logoutAdmin } from './assets/admin.js';
-    import { ToastManager } from './assets/utils.js';
-    
-    const toastManager = new ToastManager();
+    import { requireAuth, logoutAdmin, getCollection, addDocument, deleteDocument } from './assets/admin.js';
+    import { toastManager, sanitizeHtml } from './assets/utils.js';
+
     const incomeCategories = ['Shipment Fees', 'Delivery Charges', 'Premium Services', 'Consultancy', 'Other Income'];
     const expenseCategories = ['Fuel', 'Staff Salary', 'Maintenance', 'Equipment', 'Office Rent', 'Utilities', 'Insurance', 'Marketing', 'Other Expense'];
-    
+
     let transactions = [];
 
     // Initialize
     async function init() {
-      requireAuth();
+      await requireAuth();
       setDefaultDate();
-      loadTransactions();
+      await migrateLocalTransactions();
+      await loadTransactions();
       setupEventListeners();
+    }
+
+    // One-time migration: upload any legacy localStorage transactions
+    async function migrateLocalTransactions() {
+      const stored = localStorage.getItem('crown_transactions');
+      if (!stored) return;
+      try {
+        const legacy = JSON.parse(stored);
+        for (const t of legacy) {
+          await addDocument('transactions', {
+            date: t.date, type: t.type, category: t.category,
+            description: t.description, amount: Number(t.amount) || 0,
+            legacyId: t.id || ''
+          });
+        }
+        localStorage.removeItem('crown_transactions');
+        toastManager.info(`Migrated ${legacy.length} transaction(s) to the cloud`);
+      } catch (err) {
+        console.error('Migration failed:', err);
+      }
     }
 
     function setDefaultDate() {
@@ -268,6 +288,9 @@
       });
     }
 
+    // Expose for inline onchange handler in the modal
+    window.updateCategories = updateCategories;
+
     function setupEventListeners() {
       document.getElementById('add-transaction-btn').addEventListener('click', () => {
         document.getElementById('transaction-form').reset();
@@ -285,28 +308,30 @@
 
     async function handleAddTransaction(e) {
       e.preventDefault();
-      
+
       const transaction = {
         date: document.getElementById('trans-date').value,
         type: document.getElementById('trans-type').value,
         category: document.getElementById('trans-category').value,
         description: document.getElementById('trans-description').value,
-        amount: parseFloat(document.getElementById('trans-amount').value),
-        id: Date.now().toString()
+        amount: parseFloat(document.getElementById('trans-amount').value)
       };
 
-      transactions.unshift(transaction);
-      localStorage.setItem('crown_transactions', JSON.stringify(transactions));
-      
+      if (!transaction.date || !transaction.type || !transaction.category || !transaction.description || isNaN(transaction.amount)) {
+        toastManager.error('Please fill in all fields');
+        return;
+      }
+
+      const result = await addDocument('transactions', transaction);
+      if (!result.success) return;
+
       toastManager.success('Transaction added successfully!');
       document.getElementById('transaction-modal').classList.remove('show');
-      updateSummary();
-      renderTransactions();
+      await loadTransactions();
     }
 
-    function loadTransactions() {
-      const stored = localStorage.getItem('crown_transactions');
-      transactions = stored ? JSON.parse(stored) : [];
+    async function loadTransactions() {
+      transactions = await getCollection('transactions', 'createdAt', 'desc');
       updateSummary();
       renderTransactions();
     }
@@ -332,14 +357,14 @@
       tbody.innerHTML = toRender.map(t => `
         <tr>
           <td>${new Date(t.date).toLocaleDateString()}</td>
-          <td>${t.description}</td>
+          <td>${sanitizeHtml(t.description || '')}</td>
           <td><span class="badge ${t.type}">${t.type.charAt(0).toUpperCase() + t.type.slice(1)}</span></td>
           <td style="font-weight: 600; color: ${t.type === 'income' ? '#16a34a' : '#dc2626'};">
-            ${t.type === 'income' ? '+' : '-'}₦${t.amount.toLocaleString('en-NG', {minimumFractionDigits: 2})}
+            ${t.type === 'income' ? '+' : '-'}₦${(t.amount || 0).toLocaleString('en-NG', {minimumFractionDigits: 2})}
           </td>
-          <td>${t.category}</td>
+          <td>${sanitizeHtml(t.category || '')}</td>
           <td>
-            <button onclick="deleteTransaction('${t.id}')" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 14px;">
+            <button onclick="window.__deleteTransaction('${t.id}')" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 14px;">
               <i class="fas fa-trash"></i>
             </button>
           </td>
@@ -363,13 +388,13 @@
       renderTransactions(filtered);
     }
 
-    window.deleteTransaction = function(id) {
-      if (confirm('Delete this transaction?')) {
+    window.__deleteTransaction = async function(id) {
+      if (!confirm('Delete this transaction?')) return;
+      const result = await deleteDocument('transactions', id);
+      if (result.success) {
         transactions = transactions.filter(t => t.id !== id);
-        localStorage.setItem('crown_transactions', JSON.stringify(transactions));
         updateSummary();
         renderTransactions();
-        toastManager.success('Transaction deleted');
       }
     };
 

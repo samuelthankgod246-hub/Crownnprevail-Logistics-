@@ -291,7 +291,7 @@
     import { requireAuth, getCollection, addDocument, updateDocument, deleteDocument, logoutAdmin, formatDate } from './assets/admin.js';
     import { toastManager, showLoadingSkeleton } from './assets/utils.js';
     
-    requireAuth();
+    await requireAuth();
 
     let shipments = [];
     let drivers = [];

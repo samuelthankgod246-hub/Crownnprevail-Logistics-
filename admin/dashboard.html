@@ -111,7 +111,7 @@
     import { requireAuth, getCount, getCollection, formatDate, truncate, logoutAdmin } from './assets/admin.js';
     import { toastManager, showLoadingSkeleton } from './assets/utils.js';
     
-    requireAuth();
+    await requireAuth();
 
     document.getElementById('logout-link').addEventListener('click', (e) => {
       e.preventDefault();

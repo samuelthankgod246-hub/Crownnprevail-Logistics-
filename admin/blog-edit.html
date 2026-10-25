@@ -121,7 +121,7 @@
     import { requireAuth, getDocument, addDocument, updateDocument, slugify, logoutAdmin } from './assets/admin.js';
     import { toastManager, FormValidator, validators } from './assets/utils.js';
     
-    requireAuth();
+    await requireAuth();
 
     document.getElementById('logout-link').addEventListener('click', (e) => {
       e.preventDefault();

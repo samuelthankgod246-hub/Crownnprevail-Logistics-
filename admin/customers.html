@@ -60,7 +60,7 @@
   <script type="module">
     import { requireAuth, logoutAdmin, getCollection } from './assets/admin.js';
     import { toastManager } from './assets/utils.js';
-    requireAuth();
+    await requireAuth();
     let customers = [];
     async function init() {
       const [inquiries, quotes, shipments] = await Promise.all([

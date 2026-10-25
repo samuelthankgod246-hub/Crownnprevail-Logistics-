@@ -329,10 +329,8 @@
   </div>
 
   <script type="module">
-    import { requireAuth, logoutAdmin, getCollection } from './assets/admin.js';
+    import { requireAuth, logoutAdmin, getCollection, formatDate } from './assets/admin.js';
     import { toastManager } from './assets/utils.js';
-
-    requireAuth();
 
     let financialData = [];
     let shipmentData = [];
@@ -340,14 +338,14 @@
 
     // Initialize
     async function init() {
+      await requireAuth();
       await Promise.all([loadFinancialData(), loadShipmentData(), loadInquiryData()]);
       updateReportStats();
       setupEventListeners();
     }
 
     async function loadFinancialData() {
-      const data = localStorage.getItem('crown_transactions');
-      financialData = data ? JSON.parse(data) : [];
+      financialData = await getCollection('transactions', 'createdAt', 'desc');
     }
 
     async function loadShipmentData() {
@@ -355,7 +353,7 @@
     }
 
     async function loadInquiryData() {
-      inquiryData = [];
+      inquiryData = await getCollection('contact_inquiries', 'createdAt', 'desc');
     }
 
     function updateReportStats() {
@@ -415,7 +413,21 @@
 
     function generateInquiryReport() {
       toastManager.success('Inquiry report generated!');
-      document.getElementById('tab-inquiries').querySelector('.card-body p').remove();
+      const body = document.getElementById('tab-inquiries').querySelector('.card-body');
+      if (inquiryData.length === 0) {
+        body.innerHTML = '<p style="color:#666;">No inquiries recorded yet.</p>';
+        return;
+      }
+      const rows = inquiryData.map(i => `
+        <tr>
+          <td>${i.name || '—'}</td>
+          <td>${i.email || '—'}</td>
+          <td>${i.subject || i.message || '—'}</td>
+          <td>${i.status || 'new'}</td>
+          <td>${formatDate(i.createdAt)}</td>
+        </tr>
+      `).join('');
+      body.innerHTML = `<table class="report-table"><thead><tr><th>Name</th><th>Email</th><th>Subject</th><th>Status</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     function generateWeeklySummary() {
@@ -504,6 +516,19 @@
 
     function exportInquiry(format) {
       if (format === 'excel') {
+        if (inquiryData.length === 0) {
+          toastManager.error('No inquiry data to export');
+          return;
+        }
+        const data = inquiryData.map(i => ({
+          'Name': i.name || '',
+          'Email': i.email || '',
+          'Subject': i.subject || '',
+          'Message': (i.message || '').replace(/[",\n]/g, ' '),
+          'Status': i.status || 'new',
+          'Date': formatDate(i.createdAt)
+        }));
+        exportToCSV(data, 'inquiry-report.csv');
         toastManager.success('Inquiry report exported to Excel!');
       } else {
         window.print();

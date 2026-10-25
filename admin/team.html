@@ -118,7 +118,7 @@
     import { requireAuth, getCollection, addDocument, updateDocument, deleteDocument, logoutAdmin, formatDate } from './assets/admin.js';
     import { toastManager, FormValidator, validators, debounce, showLoadingSkeleton } from './assets/utils.js';
     
-    requireAuth();
+    await requireAuth();
 
     // Logout handler
     document.getElementById('logout-link').addEventListener('click', (e) => {

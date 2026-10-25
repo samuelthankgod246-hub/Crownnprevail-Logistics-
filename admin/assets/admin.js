@@ -2,11 +2,11 @@
 // CrownPrevail Logistics — Admin Dashboard Core JS
 // ============================================================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, orderBy, limit, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { firebaseConfig } from './config.js';
-import { toastManager, sanitizeInput } from './utils.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, getIdToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, setDoc, query, orderBy, limit, where, serverTimestamp, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { firebaseConfig, aiProxyConfig } from './config.js';
+import { toastManager, sanitizeInput, aiApiHandler } from './utils.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -159,10 +159,22 @@ export async function deleteDocument(collectionName, docId) {
   }
 }
 
+// Create-or-replace a document with a known id (settings docs, etc.)
+export async function setDocument(collectionName, docId, data) {
+  try {
+    await setDoc(doc(db, collectionName, docId), data, { merge: true });
+    return { success: true };
+  } catch (err) {
+    console.error(`Error setting document:`, err);
+    toastManager.error('Failed to save settings');
+    return { success: false, error: err.message };
+  }
+}
+
 export async function getCount(collectionName) {
   try {
-    const snapshot = await getDocs(collection(db, collectionName));
-    return snapshot.size;
+    const snapshot = await getCountFromServer(collection(db, collectionName));
+    return snapshot.data().count;
   } catch (err) {
     console.error(`Error getting count:`, err);
     return 0;
@@ -214,10 +226,63 @@ export function truncate(text, len = 100) {
 }
 
 // ── Route Guard ─────────────────────────────────
+// Resolves once Firebase has settled the auth state. If nobody is signed in,
+// redirects to the login page and never resolves (page code stops there).
+// Pages should call: await requireAuth(); before loading any data.
 export function requireAuth() {
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      window.location.href = 'index.html';
-    }
+  return new Promise((resolve) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      unsub();
+      if (user) {
+        currentUser = user;
+        resolve(user);
+      } else {
+        // Redirect and never resolve so page code below `await` stalls harmlessly
+        window.location.href = 'index.html';
+      }
+    });
+    // Safety net: if auth never settles (offline), redirect after 10s
+    setTimeout(() => {
+      if (!auth.currentUser) window.location.href = 'index.html';
+    }, 10000);
   });
+}
+
+// Returns the currently signed-in user (after requireAuth resolved)
+export function getCurrentUser() {
+  return currentUser;
+}
+
+// ── AI Gateway ──────────────────────────────────
+// Prefers the aiProxy Cloud Function (keys stay server-side). In local
+// preview (preview-server.js) falls back to its built-in /ai/generate proxy.
+// Last resort: direct client calls via aiApiHandler with locally stored keys.
+export async function askAI(prompt, conversationHistory = []) {
+  const isPreviewHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const proxyUrl = aiProxyConfig.url || (isPreviewHost ? '/ai/generate' : null);
+
+  if (proxyUrl && (currentUser || isPreviewHost)) {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (currentUser) {
+        const token = await getIdToken(currentUser);
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const resp = await fetch(proxyUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ prompt, conversationHistory })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.response) return { success: true, response: data.response, provider: data.provider || 'proxy' };
+        if (data.error) return { success: false, error: data.error };
+      } else {
+        console.warn('AI proxy responded', resp.status, '— falling back to direct call');
+      }
+    } catch (err) {
+      console.warn('AI proxy unreachable:', err.message);
+    }
+  }
+  return aiApiHandler.generateResponse(prompt, conversationHistory);
 }

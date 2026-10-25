@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Admin role is data-driven: an `admins/{uid}` document must exist and be
+    // active. Manage admins by creating/removing docs in the `admins`
+    // collection (uid + email fields) — no rule redeploys needed.
+    function isAdmin() {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+
+    // Basic shape guard for public form submissions: caps document size and
+    // requires a valid email string, throttling spam and cost-bombing.
+    function validInquiry() {
+      return request.resource.data.keys().size() <= 15
+        && request.resource.data.get('email', '') matches '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'
+        && request.resource.data.get('message', '').size() <= 5000;
+    }
+
+    // ── Admin-only registry ───────────────────────────
+    match /admins/{uid} {
+      allow read: if isAdmin() || request.auth.uid == uid;
+      allow write: if isAdmin();
+    }
+
+    // ── Public content ────────────────────────────────
+    match /blog_posts/{postId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /team_members/{memberId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Lead capture (public create, admin manage) ────
+    match /contact_inquiries/{inquiryId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if validInquiry();
+    }
+
+    match /quote_requests/{quoteId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if validInquiry();
+    }
+
+    match /newsletter_subscriptions/{subId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if !isAuthenticated()
+        && request.resource.data.keys().size() <= 5
+        && request.resource.data.get('email', '') matches '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$';
+    }
+
+    match /tracking_inquiries/{inquiryId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if validInquiry();
+    }
+
+    match /blog_comments/{commentId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if validInquiry();
+    }
+
+    // ── Operations (admin only) ───────────────────────
+    match /shipments/{shipmentId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /tracking_updates/{updateId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /invoices/{invoiceId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /transactions/{transactionId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Notifications queue & settings (admin only) ───
+    match /email_queue/{emailId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /app_settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Anything not explicitly allowed above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
